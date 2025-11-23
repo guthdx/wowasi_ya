@@ -128,6 +128,12 @@ Environment variables (see `.env.example`):
 
 **Port:** 8001 (avoids conflicts with n8n/5678, RECAP/8088, Stoic/3333)
 
+**Production Location:** `/home/guthdx/projects/wowasi_ya` on IyeskaLLC Ubuntu server
+
+**Quick Deploy:** Run `bash deploy.sh` on the server (handles venv, deps, PM2 config)
+
+**URL:** https://wowasi.iyeska.net (via Cloudflare tunnel)
+
 See `DEPLOYMENT.md` for:
 - Docker setup
 - Cloudflare tunnel configuration for iyeska.net
