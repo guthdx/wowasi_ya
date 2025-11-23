@@ -1,0 +1,54 @@
+# Docker Compose for Wowasi_ya
+# Port 8001 chosen to avoid conflicts with n8n (5678), RECAP (8088), Stoic (3333)
+#
+# Usage:
+#   Development: docker compose up
+#   Production:  docker compose up -d
+#
+# Cloudflare Tunnel Setup (on iyeska.net):
+#   1. Add to ~/.cloudflared/config.yml:
+#      - hostname: wowasi.iyeska.net
+#        service: http://localhost:8001
+#   2. Add CNAME record in Cloudflare DNS
+#   3. sudo systemctl restart cloudflared
+
+services:
+  wowasi:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: wowasi_ya
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - HOST=0.0.0.0
+      - PORT=8001
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - OUTPUT_DIR=/app/output
+      - DATABASE_URL=sqlite+aiosqlite:///./data/wowasi_ya.db
+      - STRICT_PRIVACY_MODE=${STRICT_PRIVACY_MODE:-true}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - ENABLE_WEB_SEARCH=${ENABLE_WEB_SEARCH:-true}
+    volumes:
+      # Persist output and database
+      - wowasi_output:/app/output
+      - wowasi_data:/app/data
+      # Optional: Mount local output directory for easier access
+      # - ./output:/app/output:rw
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  wowasi_output:
+    driver: local
+  wowasi_data:
+    driver: local
