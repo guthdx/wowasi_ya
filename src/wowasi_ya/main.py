@@ -1,10 +1,13 @@
 """FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from wowasi_ya import __version__
 from wowasi_ya.api import router
@@ -51,6 +54,17 @@ def create_app() -> FastAPI:
 
     # Include API routes
     app.include_router(router, prefix="/api/v1", tags=["projects"])
+
+    # Mount static files
+    static_dir = Path(__file__).parent.parent.parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+        # Serve index.html at root
+        @app.get("/")
+        async def read_root() -> FileResponse:
+            """Serve the main web interface."""
+            return FileResponse(str(static_dir / "index.html"))
 
     return app
 
