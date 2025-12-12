@@ -55,6 +55,9 @@ dmypy.json
 *.sqlite
 *.sqlite3
 
+# Runtime state files
+project_states.jsonl
+
 # Logs
 *.log
 logs/
