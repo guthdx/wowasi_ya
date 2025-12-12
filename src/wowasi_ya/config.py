@@ -57,6 +57,17 @@ class Settings(BaseSettings):
     claude_model: str = "claude-sonnet-4-20250514"
     max_generation_tokens: int = 4096
     enable_web_search: bool = True
+    max_concurrent_research_agents: int = Field(default=1, ge=1, le=10)  # Rate limit protection
+
+    # LLM Provider Configuration
+    generation_provider: Literal["claude", "llamacpp"] = "llamacpp"
+    research_provider: Literal["claude"] = "claude"  # Fixed for now (web search)
+
+    # Llama CPP Settings (via Cloudflare Tunnel)
+    llamacpp_base_url: str = "https://llama.iyeska.net"
+    llamacpp_model: str = "Llama-3.3-70B-Instruct-Q4_K_M"
+    llamacpp_timeout: int = 300  # 5 minutes for large documents
+    llamacpp_fallback_to_claude: bool = True  # Fallback when Mac offline
 
     @property
     def is_development(self) -> bool:

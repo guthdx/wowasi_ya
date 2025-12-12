@@ -1,6 +1,22 @@
-"""Research Engine - Phase 1: Claude API research with web search."""
+"""Research Engine - Phase 1: Claude API research with web search.
+
+PROVIDER: Claude API (Anthropic) - FIXED
+REASON: Web search capability required for research agents
+FUTURE: To swap providers, implement BaseLLMClient in llm_client.py with web search support
+
+Architecture Note:
+- Research (this file): Always uses Claude for web search
+- Generation (generator.py): Uses configurable provider (Llama/Claude)
+
+To add a new research provider:
+1. Ensure provider supports web search
+2. Create client in llm_client.py implementing BaseLLMClient
+3. Update get_research_client() factory
+4. Update this file to use the factory instead of direct Anthropic SDK
+"""
 
 import asyncio
+import logging
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -8,11 +24,13 @@ from pydantic import BaseModel, Field
 from wowasi_ya.config import Settings, get_settings
 from wowasi_ya.models.agent import AgentDefinition, AgentResult
 
+logger = logging.getLogger(__name__)
+
 
 class ResearchConfig(BaseModel):
     """Configuration for research operations."""
 
-    max_concurrent_agents: int = Field(default=3, ge=1, le=10)
+    max_concurrent_agents: int = Field(default=1, ge=1, le=10)  # Reduced to 1 to avoid Claude rate limits
     timeout_seconds: int = Field(default=120, ge=30, le=600)
     enable_web_search: bool = True
     max_search_results: int = Field(default=5, ge=1, le=10)
@@ -22,6 +40,9 @@ class ResearchEngine:
     """Engine for executing research agents via Claude API.
 
     This is Phase 1 - requires API calls (after privacy approval).
+
+    Provider: Claude API (fixed for now)
+    Reason: Web search capability required
     """
 
     def __init__(
@@ -36,7 +57,12 @@ class ResearchEngine:
             config: Research-specific configuration.
         """
         self.settings = settings or get_settings()
-        self.config = config or ResearchConfig()
+        # Use settings value if no custom config provided
+        if config is None:
+            config = ResearchConfig(
+                max_concurrent_agents=self.settings.max_concurrent_research_agents
+            )
+        self.config = config
         self._client: Any = None
 
     def _ensure_client(self) -> Any:

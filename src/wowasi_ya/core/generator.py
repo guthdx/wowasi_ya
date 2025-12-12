@@ -1,9 +1,17 @@
-"""Document Generator - Phase 2: Generate 15 project documents."""
+"""Document Generator - Phase 2: Generate 15 project documents.
 
+Provider: Configurable (Llama CPP via Cloudflare or Claude API)
+See: core/llm_client.py for provider abstraction
+"""
+
+import logging
 from datetime import datetime
 from typing import Any
 
 from wowasi_ya.config import Settings, get_settings
+from wowasi_ya.core.llm_client import BaseLLMClient, get_generation_client
+
+logger = logging.getLogger(__name__)
 from wowasi_ya.models.agent import AgentResult
 from wowasi_ya.models.document import (
     DOCUMENT_BATCHES,
@@ -98,8 +106,12 @@ DOCUMENT_CONFIG: dict[DocumentType, dict[str, str]] = {
 class DocumentGenerator:
     """Generator for creating project documentation.
 
-    This is Phase 2 - requires API calls.
+    This is Phase 2 - requires LLM calls.
     Documents are generated in batches per Process-Workflow.md.
+
+    Provider is configurable via GENERATION_PROVIDER env var:
+    - "llamacpp": Llama 3.3 70B via Cloudflare Tunnel (cost-effective)
+    - "claude": Claude API (fallback or explicit choice)
     """
 
     def __init__(self, settings: Settings | None = None) -> None:
@@ -109,19 +121,16 @@ class DocumentGenerator:
             settings: Application settings.
         """
         self.settings = settings or get_settings()
-        self._client: Any = None
+        self._client: BaseLLMClient | None = None
 
-    def _ensure_client(self) -> Any:
-        """Lazily initialize the Anthropic client."""
+    async def _get_client(self) -> BaseLLMClient:
+        """Get LLM client with intelligent fallback.
+
+        Returns:
+            LLM client instance (Llama or Claude).
+        """
         if self._client is None:
-            try:
-                import anthropic
-
-                self._client = anthropic.Anthropic(
-                    api_key=self.settings.anthropic_api_key.get_secret_value()
-                )
-            except ImportError:
-                raise RuntimeError("anthropic package not installed")
+            self._client = await get_generation_client(self.settings)
         return self._client
 
     async def generate_document(
@@ -142,7 +151,7 @@ class DocumentGenerator:
         Returns:
             Generated document.
         """
-        client = self._ensure_client()
+        client = await self._get_client()
         config = DOCUMENT_CONFIG[doc_type]
 
         prompt = self._build_generation_prompt(
@@ -150,17 +159,12 @@ class DocumentGenerator:
         )
 
         try:
-            response = client.messages.create(
-                model=self.settings.claude_model,
+            # Use abstracted LLM client (works with both Claude and Llama)
+            content = await client.generate(
+                prompt=prompt,
                 max_tokens=self.settings.max_generation_tokens,
-                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
             )
-
-            # Extract content
-            content = ""
-            for block in response.content:
-                if hasattr(block, "text"):
-                    content += block.text
 
             return Document(
                 type=doc_type,
@@ -173,6 +177,7 @@ class DocumentGenerator:
             )
 
         except Exception as e:
+            logger.error(f"Error generating {doc_type}: {e}")
             # Return error document
             return Document(
                 type=doc_type,
@@ -190,7 +195,14 @@ class DocumentGenerator:
         research_results: list[AgentResult],
         previous_docs: list[Document],
     ) -> str:
-        """Build the generation prompt for a document."""
+        """Build the generation prompt for a document.
+
+        Enhanced for Llama 3.3 70B with:
+        - Explicit constraints and rules
+        - Hallucination prevention guards
+        - Clear structure requirements
+        - Cross-document consistency enforcement
+        """
         config = DOCUMENT_CONFIG[doc_type]
 
         # Compile research findings
@@ -199,29 +211,56 @@ class DocumentGenerator:
         # Get relevant previous documents
         prev_context = self._get_previous_context(previous_docs)
 
-        return f"""Generate a professional project document for: {config['title']}
+        return f"""You are writing a professional project planning document for a real organization.
 
-## Project Information
-**Name:** {project.name}
-**Description:** {project.description}
+## DOCUMENT TO WRITE
+{config['title']}
+
+## PROJECT CONTEXT
+**Project Name:** {project.name}
+**Project Description:** {project.description}
 {f"**Additional Context:** {project.additional_context}" if project.additional_context else ""}
 
-## Research Findings
+## RESEARCH FINDINGS
 {research_summary}
 
-## Previous Documents Context
+## PREVIOUS DOCUMENTS (for consistency)
 {prev_context}
 
-## Document Requirements
-Generate a complete "{config['title']}" document in Markdown format.
-- Use professional, clear language
-- Include relevant sections and subsections
-- Reference research findings where applicable
-- Maintain consistency with previous documents
-- Follow the standard project documentation structure
+## STRICT RULES (you must follow all of these)
 
-## Output
-Provide only the Markdown content for the document, starting with the title as an H1 heading.
+1. **Format:** Write in Markdown format only
+2. **Start with:** An H1 heading (# {config['title']})
+3. **Tone:** Professional, clear, neutral language suitable for nonprofit, tribal, or public-sector organizations
+4. **Structure:** Include clear sections with H2 headings (##) and subsections with H3 headings (###) where appropriate
+5. **Consistency:** Align with information from previous documents - do not contradict earlier assumptions, scope, or constraints
+6. **Research Integration:** Reference relevant findings from the research section where applicable
+
+## CONSTRAINTS (do not violate these)
+
+1. **DO NOT invent:** Specific technologies, vendor names, product names, or software platforms unless mentioned in research findings
+2. **DO NOT fabricate:** Statistics, dollar amounts, grant names, or funding sources unless provided in project context
+3. **DO NOT add:** New stakeholders, team members, or organizational partners not mentioned in project description or previous documents
+4. **DO NOT include:** Marketing language, sales pitches, or promotional content
+5. **DO NOT contradict:** Information from previous documents - maintain consistency across all documentation
+
+## REQUIRED SECTIONS
+
+Include the following in your document:
+- Introduction or overview paragraph
+- Multiple main sections with descriptive H2 headings
+- Subsections with H3 headings where detail is needed
+- Concluding summary or next steps (where appropriate for document type)
+
+## OUTPUT FORMAT
+
+Provide ONLY the Markdown document content.
+- Start with: # {config['title']}
+- Use proper Markdown formatting
+- Keep language professional and factual
+- Ensure all information is grounded in the project context and research findings provided
+
+Write the complete document now.
 """
 
     def _compile_research_summary(self, results: list[AgentResult]) -> str:

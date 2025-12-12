@@ -71,9 +71,51 @@ quality_checker = QualityChecker()
 
 
 @router.get("/health")
-async def health_check() -> dict[str, str]:
-    """Health check endpoint."""
-    return {"status": "healthy", "service": "wowasi_ya"}
+async def health_check(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, str | dict]:
+    """Health check endpoint with LLM provider status.
+
+    Returns:
+        System health including generation provider availability.
+    """
+    from wowasi_ya.core.llm_client import LlamaCPPClient
+
+    health_info: dict[str, str | dict] = {
+        "status": "healthy",
+        "service": "wowasi_ya",
+        "generation_provider": settings.generation_provider,
+        "research_provider": settings.research_provider,
+    }
+
+    # Check Llama CPP availability if configured
+    if settings.generation_provider == "llamacpp":
+        llama_client = LlamaCPPClient(settings)
+        try:
+            is_available = await llama_client.health_check()
+            await llama_client.close()
+
+            health_info["llamacpp"] = {
+                "available": is_available,
+                "url": settings.llamacpp_base_url,
+                "fallback_enabled": settings.llamacpp_fallback_to_claude,
+            }
+
+            if not is_available:
+                health_info["llamacpp"]["message"] = (
+                    "Mac Llama server unreachable. "
+                    "Ensure Mac is online with Cloudflare tunnel running."
+                )
+                if settings.llamacpp_fallback_to_claude:
+                    health_info["llamacpp"]["fallback_status"] = "Will use Claude"
+        except Exception as e:
+            health_info["llamacpp"] = {
+                "available": False,
+                "error": str(e),
+                "fallback_enabled": settings.llamacpp_fallback_to_claude,
+            }
+
+    return health_info
 
 
 @router.post("/projects", response_model=ProjectCreateResponse)
