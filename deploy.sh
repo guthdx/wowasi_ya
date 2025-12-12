@@ -17,7 +17,7 @@ echo "=========================================="
 # Variables
 PROJECT_DIR="/home/guthdx/projects/wowasi_ya"
 REPO_URL="https://github.com/guthdx/wowasi_ya.git"
-PORT=8001
+PORT=8002
 
 # Step 1: Check prerequisites
 echo ""
@@ -107,7 +107,7 @@ if [ -f "$CLOUDFLARE_CONFIG" ]; then
         echo "⚠️  Add this to $CLOUDFLARE_CONFIG (before the http_status:404 line):"
         echo ""
         echo "  - hostname: wowasi.iyeska.net"
-        echo "    service: http://localhost:8001"
+        echo "    service: http://localhost:8002"
         echo ""
         echo "Then run: sudo systemctl restart cloudflared"
         echo ""
@@ -133,7 +133,7 @@ module.exports = {
   apps: [{
     name: 'wowasi_ya',
     script: '.venv/bin/python',
-    args: '-m uvicorn wowasi_ya.main:app --host 0.0.0.0 --port 8001',
+    args: '-m uvicorn wowasi_ya.main:app --host 0.0.0.0 --port 8002',
     cwd: '/home/guthdx/projects/wowasi_ya',
     env_file: '/home/guthdx/projects/wowasi_ya/.env',
     watch: false,
@@ -165,6 +165,6 @@ echo "Next steps:"
 echo "  1. Edit .env with your ANTHROPIC_API_KEY"
 echo "  2. Configure Cloudflare tunnel (if not done)"
 echo "  3. Start with: pm2 start ecosystem.config.js && pm2 save"
-echo "  4. Test: curl http://localhost:8001/api/v1/health"
+echo "  4. Test: curl http://localhost:8002/api/v1/health"
 echo ""
 echo "=========================================="

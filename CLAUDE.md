@@ -173,7 +173,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ## Deployment
 
-**Port:** 8001 (avoids conflicts with n8n/5678, RECAP/8088, Stoic/3333)
+**Port:** 8002 (avoids conflicts with n8n/5678, RECAP/8088, Stoic/3333, Wowasi initial/8001)
 
 **Production Location:** `/home/guthdx/projects/wowasi_ya` on IYESKA Ubuntu server (192.168.11.20)
 

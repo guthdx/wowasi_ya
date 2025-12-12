@@ -2,9 +2,10 @@
 
 ## Server Infrastructure
 
-Wowasi_ya runs on port **8001** to avoid conflicts with existing services:
+Wowasi_ya runs on port **8002** to avoid conflicts with existing services:
 - 3333: Stoic Indian
 - 5678: n8n
+- 8001: Wowasi (initial version)
 - 8088: RECAP Search
 
 ## Quick Start (Docker)
@@ -33,7 +34,7 @@ sudo nano ~/.cloudflared/config.yml
 Add before the catch-all rule:
 ```yaml
   - hostname: wowasi.iyeska.net
-    service: http://localhost:8001
+    service: http://localhost:8002
 ```
 
 Full config should look like:
@@ -47,7 +48,7 @@ ingress:
   - hostname: stoic.iyeska.net
     service: http://localhost:3333
   - hostname: wowasi.iyeska.net
-    service: http://localhost:8001
+    service: http://localhost:8002
   - service: http_status:404
 ```
 
@@ -79,7 +80,7 @@ module.exports = {
   apps: [{
     name: 'wowasi_ya',
     script: '.venv/bin/python',
-    args: '-m uvicorn wowasi_ya.main:app --host 0.0.0.0 --port 8001',
+    args: '-m uvicorn wowasi_ya.main:app --host 0.0.0.0 --port 8002',
     cwd: '/path/to/wowasi_ya',
     env: {
       ANTHROPIC_API_KEY: 'your-key-here',
@@ -114,7 +115,7 @@ WorkingDirectory=/home/guthdx/wowasi_ya
 Environment="PATH=/home/guthdx/wowasi_ya/.venv/bin"
 Environment="ANTHROPIC_API_KEY=your-key-here"
 Environment="ENVIRONMENT=production"
-ExecStart=/home/guthdx/wowasi_ya/.venv/bin/python -m uvicorn wowasi_ya.main:app --host 0.0.0.0 --port 8001
+ExecStart=/home/guthdx/wowasi_ya/.venv/bin/python -m uvicorn wowasi_ya.main:app --host 0.0.0.0 --port 8002
 Restart=always
 RestartSec=10
 
@@ -146,7 +147,7 @@ wowasi discover "Project Name" "Description"
 wowasi privacy-check "Text that might contain john.doe@email.com or 555-123-4567"
 
 # Start the server
-wowasi serve --port 8001
+wowasi serve --port 8002
 ```
 
 ## API Endpoints
@@ -171,5 +172,6 @@ API docs available at: `https://wowasi.iyeska.net/docs`
 |------|---------|--------|
 | 3333 | Stoic Indian | In use |
 | 5678 | n8n | In use |
-| 8001 | **Wowasi_ya** | New |
+| 8001 | Wowasi (initial) | In use |
+| 8002 | **Wowasi_ya** | New |
 | 8088 | RECAP Search | In use |
