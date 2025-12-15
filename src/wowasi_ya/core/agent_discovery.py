@@ -243,7 +243,8 @@ class AgentDiscoveryService:
             List of agent definitions for the research phase.
         """
         agents: list[AgentDefinition] = []
-        agent_counter = 1
+        # Start at 2 since frameworks agent has priority 1
+        agent_counter = 2
 
         for match in domain_matches:
             domain_def = next(
@@ -299,6 +300,43 @@ class AgentDiscoveryService:
         ]
         return queries
 
+    def _create_documentation_framework_agent(self, project: ProjectInput) -> AgentDefinition:
+        """Create universal agent that gathers professional documentation frameworks.
+
+        This agent runs for EVERY project to provide Llama with professional
+        scaffolding (frameworks, templates, examples) it needs since it lacks web access.
+
+        Args:
+            project: Project input.
+
+        Returns:
+            Documentation frameworks agent definition.
+        """
+        return AgentDefinition(
+            id="agent_000_frameworks",
+            name="Documentation Frameworks & Professional Standards",
+            role="Senior Documentation Architect with 15+ years in nonprofit, tribal, and public sector",
+            domains=["documentation", "professional_standards", "project_management"],
+            research_questions=[
+                "What are the industry-standard frameworks for professional project documentation? (e.g., SMART goals, RACI charts, risk matrices, Gantt conventions)",
+                "What are best practices and formatting conventions for executive-level project documentation in nonprofit/public sector?",
+                "What are concrete examples of well-written budget narratives, risk assessments, and SOPs for similar organizations?",
+                "What are the key differences between junior-level and senior-level project documentation in terms of depth, specificity, and strategic thinking?",
+                "What professional templates and structures are commonly used for project briefs, stakeholder notes, and status updates?",
+            ],
+            search_queries=[
+                "nonprofit project documentation best practices 2024",
+                "professional project management frameworks SMART goals RACI",
+                "executive-level budget narrative examples public sector",
+                "risk assessment matrix templates nonprofit organizations",
+                "standard operating procedures SOP templates government agencies",
+                "project timeline Gantt chart best practices",
+                "stakeholder analysis frameworks project management",
+                "senior project manager documentation vs junior",
+            ],
+            priority=1,  # Highest priority - runs first
+        )
+
     def discover(self, project: ProjectInput) -> tuple[list[DomainMatch], list[AgentDefinition]]:
         """Run full discovery process.
 
@@ -310,4 +348,9 @@ class AgentDiscoveryService:
         """
         matches = self.analyze_project(project)
         agents = self.generate_agents(project, matches)
+
+        # ALWAYS add the documentation frameworks agent as first priority
+        framework_agent = self._create_documentation_framework_agent(project)
+        agents.insert(0, framework_agent)
+
         return matches, agents

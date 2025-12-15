@@ -129,7 +129,15 @@ class ResearchEngine:
         agent: AgentDefinition,
         project_context: str,
     ) -> str:
-        """Build the research prompt for an agent."""
+        """Build the research prompt for an agent.
+
+        Uses specialized prompts for documentation framework agent vs domain agents.
+        """
+        # Special handling for documentation frameworks agent
+        if agent.id == "agent_000_frameworks":
+            return self._build_frameworks_research_prompt(agent, project_context)
+
+        # Standard domain research prompt
         questions = "\n".join(f"- {q}" for q in agent.research_questions)
         queries = "\n".join(f"- {q}" for q in agent.search_queries)
 
@@ -159,6 +167,108 @@ Provide your findings in this structure:
 - KEY FINDINGS: Bullet points of important discoveries
 - SOURCES: URLs and references used
 - RECOMMENDATIONS: Actionable recommendations for the project
+"""
+
+    def _build_frameworks_research_prompt(
+        self,
+        agent: AgentDefinition,
+        project_context: str,
+    ) -> str:
+        """Build specialized research prompt for documentation frameworks agent.
+
+        This agent provides professional scaffolding for Llama 3.3 70B, which lacks
+        web access. Claude gathers frameworks, templates, and examples that Llama
+        will use to generate senior-level documentation.
+        """
+        questions = "\n".join(f"- {q}" for q in agent.research_questions)
+        queries = "\n".join(f"- {q}" for q in agent.search_queries)
+
+        return f"""You are a {agent.role} conducting research to provide professional documentation frameworks.
+
+## Mission
+Your research will be used by a local AI model (Llama 3.3 70B) that DOES NOT have web access.
+You must gather comprehensive professional scaffolding so it can generate senior-level documentation.
+
+## Project Context
+{project_context}
+
+## Research Questions to Answer
+{questions}
+
+## Suggested Search Queries
+{queries}
+
+## Critical Requirements
+
+Your findings must include CONCRETE, SPECIFIC information in these categories:
+
+### 1. Professional Frameworks
+Search for and document:
+- SMART goals framework (specific criteria and examples)
+- RACI matrix structure and usage guidelines
+- Risk assessment matrices (likelihood × impact scales)
+- Gantt chart conventions and best practices
+- Stakeholder analysis frameworks (power/interest grid, etc.)
+- Budget categories and narrative structures for nonprofits
+
+### 2. Document Structure Templates
+For each document type (Budget, Risk Assessment, SOPs, Timeline, etc.):
+- Standard section headings used by professionals
+- Typical subsections and organization
+- What information goes where
+- Common formatting conventions
+
+### 3. Concrete Examples
+Find and extract SPECIFIC examples of:
+- Well-written budget narratives (what makes them "senior level")
+- Professional risk statements with mitigation strategies
+- Effective SOP formats and language
+- Clear timeline descriptions with milestones
+- Executive-level status updates vs junior-level
+
+### 4. Depth & Sophistication Markers
+Identify what distinguishes senior-level from junior-level documentation:
+- Level of strategic thinking (vs tactical)
+- Depth of analysis and justification
+- Cross-referencing and consistency
+- Anticipation of questions/concerns
+- Use of data and evidence
+
+## Output Format
+
+Provide findings in this EXACT structure:
+
+### KEY FINDINGS
+- [Specific frameworks, templates, structures you found]
+- [Include concrete details, not vague descriptions]
+- [Quote specific criteria, scales, categories when possible]
+
+### PROFESSIONAL EXAMPLES
+- [Example 1: Type of doc, what made it professional, specific language/structure]
+- [Example 2: ...]
+- [Include at least 5-7 concrete examples across different document types]
+
+### FRAMEWORKS & STANDARDS
+- [Framework name: specific structure/criteria]
+- [Include at least 5 major frameworks with details]
+
+### SENIOR VS JUNIOR MARKERS
+- [What senior-level documentation includes that junior doesn't]
+- [Specific differences in language, depth, structure]
+
+### SOURCES
+- [URLs with titles and relevance notes]
+
+### RECOMMENDATIONS
+- [How the local AI should use these frameworks]
+- [Specific guidance for generating professional documentation]
+
+## Instructions
+1. Search extensively - this is foundational research for ALL projects
+2. Prioritize authoritative sources (PMI, government style guides, academic)
+3. Extract SPECIFIC details, not general principles
+4. Include actual examples and concrete templates
+5. Focus on nonprofit, tribal, and public sector contexts
 """
 
     def _parse_response(self, agent: AgentDefinition, response: Any) -> AgentResult:
