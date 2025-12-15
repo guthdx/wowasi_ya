@@ -32,6 +32,10 @@ class ProjectInput(BaseModel):
         max_length=10000,
         description="Detailed project description",
     )
+    area: str = Field(
+        default="04_Iyeska",
+        description="Project area/category (e.g., 01_Personal, 02_MBIRI, 03_NativeBio, 04_Iyeska, 05_ProjectH3LP)",
+    )
     additional_context: str | None = Field(
         default=None,
         max_length=5000,

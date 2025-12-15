@@ -356,11 +356,23 @@ async def run_generation_pipeline(
         state.status = ProjectStatus.OUTPUTTING
 
         output_manager = OutputManager(settings)
+
+        # Write to primary output format
         output_paths = await output_manager.write(
             generated_project,
             state.input.output_format,
         )
         state.output_paths = output_paths
+
+        # Auto-sync to Google Drive if enabled
+        if settings.enable_gdrive_sync and state.input.output_format != "gdrive":
+            try:
+                gdrive_paths = await output_manager.write(generated_project, "gdrive")
+                # Add gdrive paths to output for tracking
+                state.output_paths.extend([f"gdrive:{p}" for p in gdrive_paths])
+            except Exception as e:
+                # Don't fail the whole operation if gdrive sync fails
+                print(f"⚠ Warning: Google Drive sync failed: {e}")
 
         # Complete
         state.status = ProjectStatus.COMPLETED

@@ -227,6 +227,17 @@ async def _generate_async(
         output = OutputManager(settings)
         paths = await output.write(generated_project, output_format)
 
+        # Auto-sync to Google Drive if enabled
+        if settings.enable_gdrive_sync and output_format != "gdrive":
+            progress.update(task, description="Phase 4: Syncing to Google Drive...")
+            try:
+                gdrive_paths = await output.write(generated_project, "gdrive")
+                # Mark that Google Drive sync succeeded
+                console.print("[green]✓[/] Synced to Google Drive", style="dim")
+            except Exception as e:
+                # Don't fail the whole operation if gdrive sync fails
+                console.print(f"[yellow]⚠[/] Google Drive sync failed: {e}", style="dim")
+
         progress.update(task, completed=True)
 
     console.print(f"\n[bold green]✓ Generation complete![/]")

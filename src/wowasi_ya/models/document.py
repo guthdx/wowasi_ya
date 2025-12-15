@@ -54,6 +54,7 @@ class GeneratedProject(BaseModel):
     """Complete generated project with all documents."""
 
     project_name: str
+    project_area: str = Field(default="04_Iyeska", description="Project area/category")
     documents: list[Document] = Field(default_factory=list)
     total_word_count: int = Field(default=0)
     generation_time_seconds: float = Field(default=0.0)

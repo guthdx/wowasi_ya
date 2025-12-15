@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     output_dir: Path = Path("./output")
     obsidian_vault_path: Path | None = None
     git_output_path: Path | None = None
+    gdrive_remote_path: str = "gdrive:Wowasi"
+    enable_gdrive_sync: bool = True
 
     # Database
     database_url: str = "sqlite+aiosqlite:///./wowasi_ya.db"

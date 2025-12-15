@@ -76,8 +76,11 @@ class ObsidianWriter(OutputWriter):
         """Write documents to Obsidian vault with wiki-style links."""
         paths: list[str] = []
 
-        # Use vault path as destination
-        project_dir = self.vault_path / self._sanitize_name(project.project_name)
+        # Use vault path as destination, nested under area folder
+        area_dir = self.vault_path / project.project_area
+        area_dir.mkdir(parents=True, exist_ok=True)
+
+        project_dir = area_dir / self._sanitize_name(project.project_name)
         project_dir.mkdir(parents=True, exist_ok=True)
 
         # Create folder structure
@@ -183,6 +186,83 @@ class GitWriter(OutputWriter):
             pass
 
 
+class GoogleDriveWriter(OutputWriter):
+    """Write documents to Google Drive via rclone."""
+
+    def __init__(self, remote_path: str = "gdrive:Wowasi", local_cache: Path | None = None) -> None:
+        """Initialize with Google Drive remote path.
+
+        Args:
+            remote_path: Rclone remote path (e.g., "gdrive:Wowasi").
+            local_cache: Optional local cache directory (defaults to ./output).
+        """
+        self.remote_path = remote_path
+        self.local_cache = local_cache or Path("./output")
+
+    async def write(self, project: GeneratedProject, destination: Path) -> list[str]:
+        """Write documents to Google Drive via rclone sync.
+
+        First writes to local cache, then syncs to Google Drive.
+        """
+        paths: list[str] = []
+
+        # Write to local cache first
+        fs_writer = FilesystemWriter()
+        paths = await fs_writer.write(project, self.local_cache)
+
+        # Sync to Google Drive
+        if paths:
+            self._sync_to_gdrive(project.project_name, project.project_area)
+
+        return paths
+
+    def _sync_to_gdrive(self, project_name: str, project_area: str = "04_Iyeska") -> None:
+        """Sync project directory to Google Drive using rclone."""
+        try:
+            # Sanitize project name for filesystem
+            sanitized_name = self._sanitize_name(project_name)
+            local_path = self.local_cache / sanitized_name
+            # Nest under area folder in Google Drive
+            remote_project_path = f"{self.remote_path}/{project_area}/{sanitized_name}"
+
+            # Run rclone copy (preserves existing remote files, only adds new/changed)
+            result = subprocess.run(
+                [
+                    "rclone",
+                    "copy",
+                    str(local_path),
+                    remote_project_path,
+                    "--exclude",
+                    ".DS_Store",
+                    "--exclude",
+                    "*.tmp",
+                    "--log-level",
+                    "INFO",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            # Log success
+            print(f"✓ Synced to Google Drive: {remote_project_path}")
+
+        except subprocess.CalledProcessError as e:
+            # Log error but don't fail the whole operation
+            print(f"⚠ Warning: Failed to sync to Google Drive: {e.stderr}")
+        except FileNotFoundError:
+            # rclone not installed
+            print("⚠ Warning: rclone not found. Install rclone to enable Google Drive sync.")
+
+    def _sanitize_name(self, name: str) -> str:
+        """Sanitize project name for filesystem use."""
+        invalid_chars = '<>:"/\\|?*'
+        sanitized = name
+        for char in invalid_chars:
+            sanitized = sanitized.replace(char, "_")
+        return sanitized.strip()
+
+
 class OutputManager:
     """Manager for writing generated projects to various outputs."""
 
@@ -203,14 +283,20 @@ class OutputManager:
 
         Args:
             project: Generated project to write.
-            output_format: Output format (filesystem, obsidian, git).
+            output_format: Output format (filesystem, obsidian, git, gdrive).
 
         Returns:
             List of output paths.
         """
         writer: OutputWriter
 
-        if output_format == "obsidian" and self.settings.obsidian_vault_path:
+        if output_format == "gdrive":
+            writer = GoogleDriveWriter(
+                remote_path=self.settings.gdrive_remote_path,
+                local_cache=self.settings.output_dir,
+            )
+            destination = self.settings.output_dir
+        elif output_format == "obsidian" and self.settings.obsidian_vault_path:
             writer = ObsidianWriter(self.settings.obsidian_vault_path)
             destination = self.settings.obsidian_vault_path
         elif output_format == "git" and self.settings.git_output_path:
