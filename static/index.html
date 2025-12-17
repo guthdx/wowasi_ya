@@ -3,102 +3,414 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wowasi_ya - Project Documentation Generator</title>
+    <title>Wowasi_ya - Project Documentation Generator | Iyéska</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'iyeska': {
+                            rust: '#c06c4d',
+                            'rust-light': '#d4897a',
+                            'rust-dark': '#a85a3d',
+                            blue: '#56738c',
+                            'blue-light': '#6b8aa6',
+                            dark: '#333333',
+                        },
+                        'surface': {
+                            primary: '#0c1017',
+                            secondary: '#141c27',
+                            tertiary: '#1c2736',
+                            elevated: '#243044',
+                        },
+                        'border': {
+                            subtle: '#2a3545',
+                            DEFAULT: '#3a4555',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Open Sans', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+        /* Base styles */
+        body {
+            font-family: 'Open Sans', system-ui, sans-serif;
+            background: #0c1017;
+            color: #f8f8f8;
         }
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+
+        /* Subtle gradient background */
+        .bg-gradient-surface {
+            background: linear-gradient(180deg, #0c1017 0%, #0f1520 100%);
         }
-        .pulse-dot {
-            animation: pulse 2s infinite;
+
+        /* Header gradient with brand colors */
+        .header-gradient {
+            background: linear-gradient(135deg, rgba(28, 39, 54, 0.95) 0%, rgba(12, 16, 23, 0.98) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+        /* Card styles */
+        .card {
+            background: #141c27;
+            border: 1px solid #2a3545;
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        .card:hover {
+            border-color: #3a4555;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Input styles */
+        .input-field {
+            background: #1c2736;
+            border: 1px solid #2a3545;
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: #f8f8f8;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: #c06c4d;
+            box-shadow: 0 0 0 3px rgba(192, 108, 77, 0.15);
+        }
+
+        .input-field::placeholder {
+            color: #6b7280;
+        }
+
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #c06c4d 0%, #a85a3d 100%);
+            color: white;
+            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(192, 108, 77, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(192, 108, 77, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #1c2736;
+            border: 1px solid #2a3545;
+            color: #f8f8f8;
+            font-weight: 500;
+            padding: 14px 28px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #243044;
+            border-color: #3a4555;
+        }
+
+        /* Step indicator */
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step-active .step-circle {
+            background: linear-gradient(135deg, #c06c4d 0%, #a85a3d 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(192, 108, 77, 0.4);
+        }
+
+        .step-completed .step-circle {
+            background: #c06c4d;
+            color: white;
+        }
+
+        .step-pending .step-circle {
+            background: #1c2736;
+            border: 2px solid #2a3545;
+            color: #6b7280;
+        }
+
+        .step-connector {
+            height: 2px;
+            background: #2a3545;
+            flex: 1;
+            max-width: 80px;
+            margin: 0 8px;
+            position: relative;
+        }
+
+        .step-connector.completed {
+            background: linear-gradient(90deg, #c06c4d 0%, #c06c4d 100%);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                opacity: 1;
+                box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+            }
+            50% {
+                opacity: 0.7;
+                box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+            }
+        }
+
         .fade-in {
-            animation: fadeIn 0.3s ease-in;
+            animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .pulse-status {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        /* Progress bar */
+        .progress-track {
+            background: #1c2736;
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #c06c4d 0%, #d4897a 100%);
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Nested card */
+        .nested-card {
+            background: #1c2736;
+            border: 1px solid #2a3545;
+            border-radius: 12px;
+        }
+
+        /* Icon colors */
+        .icon-rust { color: #c06c4d; }
+        .icon-blue { color: #56738c; }
+        .icon-success { color: #22c55e; }
+        .icon-warning { color: #eab308; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1c2736;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3a4555;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a5565;
+        }
+
+        /* Modal overlay */
+        .modal-overlay {
+            background: rgba(12, 16, 23, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Toast styles */
+        .toast {
+            background: #1c2736;
+            border: 1px solid #2a3545;
+            border-radius: 10px;
+            padding: 14px 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .toast-success { border-left: 3px solid #22c55e; }
+        .toast-error { border-left: 3px solid #ef4444; }
+        .toast-info { border-left: 3px solid #56738c; }
+        .toast-warning { border-left: 3px solid #eab308; }
+
+        /* Empty state */
+        .empty-state {
+            background: linear-gradient(135deg, rgba(28, 39, 54, 0.5) 0%, rgba(20, 28, 39, 0.5) 100%);
+            border: 1px dashed #2a3545;
+            border-radius: 16px;
+        }
+
+        /* Mobile responsive step indicator */
+        @media (max-width: 640px) {
+            .step-indicator-desktop {
+                display: none;
+            }
+            .step-indicator-mobile {
+                display: flex;
+            }
+        }
+
+        @media (min-width: 641px) {
+            .step-indicator-mobile {
+                display: none;
+            }
+        }
+
+        /* Checkbox custom style */
+        input[type="checkbox"] {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #1c2736;
+            border: 2px solid #3a4555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        input[type="checkbox"]:checked {
+            background: #c06c4d;
+            border-color: #c06c4d;
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Select dropdown */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 18px;
+            padding-right: 44px;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen">
+<body class="bg-gradient-surface min-h-screen">
     <!-- Navigation -->
-    <nav class="gradient-bg border-b border-slate-700 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
+    <nav class="header-gradient border-b border-border-subtle sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-file-alt text-white"></i>
-                    </div>
+                    <img src="/static/iyeska-logo.png" alt="Iyéska" class="h-10 w-10 object-contain">
                     <div>
-                        <h1 class="text-xl font-bold">Wowasi_ya</h1>
-                        <p class="text-xs text-slate-400">Project Documentation Generator</p>
+                        <h1 class="text-lg font-semibold tracking-tight">Wowasi_ya</h1>
+                        <p class="text-xs text-gray-500 -mt-0.5">Project Documentation Generator</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span id="status-indicator" class="flex items-center text-sm text-green-400">
-                        <span class="w-2 h-2 bg-green-400 rounded-full mr-2 pulse-dot"></span>
-                        Connected
-                    </span>
+
+                <!-- Status Indicator -->
+                <div id="status-indicator" class="flex items-center space-x-2 text-sm">
+                    <span class="w-2 h-2 bg-green-500 rounded-full pulse-status"></span>
+                    <span class="text-green-400 font-medium">Connected</span>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Step Indicator -->
-        <div class="mb-8">
-            <div class="flex items-center justify-center space-x-4">
-                <div id="step-1" class="step-indicator flex items-center">
-                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">1</div>
-                    <span class="ml-2 text-sm font-medium">Describe</span>
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Step Indicator - Desktop -->
+        <div class="step-indicator-desktop mb-10">
+            <div class="flex items-center justify-center">
+                <div id="step-1" class="step-indicator step-active flex items-center">
+                    <div class="step-circle">1</div>
+                    <span class="ml-3 text-sm font-medium text-white">Describe</span>
                 </div>
-                <div class="w-12 h-0.5 bg-slate-700"></div>
-                <div id="step-2" class="step-indicator flex items-center opacity-50">
-                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold">2</div>
-                    <span class="ml-2 text-sm font-medium">Review</span>
+                <div id="connector-1" class="step-connector"></div>
+                <div id="step-2" class="step-indicator step-pending flex items-center">
+                    <div class="step-circle">2</div>
+                    <span class="ml-3 text-sm font-medium text-gray-500">Review</span>
                 </div>
-                <div class="w-12 h-0.5 bg-slate-700"></div>
-                <div id="step-3" class="step-indicator flex items-center opacity-50">
-                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold">3</div>
-                    <span class="ml-2 text-sm font-medium">Approve</span>
+                <div id="connector-2" class="step-connector"></div>
+                <div id="step-3" class="step-indicator step-pending flex items-center">
+                    <div class="step-circle">3</div>
+                    <span class="ml-3 text-sm font-medium text-gray-500">Approve</span>
                 </div>
-                <div class="w-12 h-0.5 bg-slate-700"></div>
-                <div id="step-4" class="step-indicator flex items-center opacity-50">
-                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold">4</div>
-                    <span class="ml-2 text-sm font-medium">Generate</span>
+                <div id="connector-3" class="step-connector"></div>
+                <div id="step-4" class="step-indicator step-pending flex items-center">
+                    <div class="step-circle">4</div>
+                    <span class="ml-3 text-sm font-medium text-gray-500">Generate</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Step Indicator - Mobile -->
+        <div class="step-indicator-mobile mb-6 justify-center">
+            <div class="flex items-center space-x-2 bg-surface-secondary px-4 py-2 rounded-full border border-border-subtle">
+                <span class="text-sm font-medium text-iyeska-rust">Step <span id="current-step-num">1</span></span>
+                <span class="text-gray-500">of 4</span>
+                <span class="text-gray-400 mx-2">•</span>
+                <span id="current-step-name" class="text-sm text-white">Describe</span>
             </div>
         </div>
 
         <!-- Step 1: Project Input -->
         <section id="section-input" class="fade-in">
-            <div class="bg-slate-800 rounded-xl border border-slate-700 p-6 card-hover transition-all duration-300">
-                <h2 class="text-2xl font-bold mb-2">Start a New Project</h2>
-                <p class="text-slate-400 mb-6">Enter your project details and we'll generate comprehensive documentation.</p>
+            <div class="card p-6 sm:p-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-2">Start a New Project</h2>
+                    <p class="text-gray-400">Enter your project details and we'll generate comprehensive documentation.</p>
+                </div>
 
                 <form id="project-form" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-medium mb-2">Project Name</label>
+                            <label class="block text-sm font-medium mb-2 text-gray-300">Project Name</label>
                             <input type="text" id="project-name"
-                                class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                                class="input-field w-full"
                                 placeholder="e.g., Tribal Telehealth Initiative">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2">Project Area</label>
-                            <select id="project-area"
-                                class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                            <label class="block text-sm font-medium mb-2 text-gray-300">Project Area</label>
+                            <select id="project-area" class="input-field w-full">
                                 <option value="01_Personal">Personal</option>
                                 <option value="02_MBIRI">MBIRI</option>
                                 <option value="03_NativeBio">NativeBio</option>
@@ -109,35 +421,37 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium mb-2">Project Description</label>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Project Description</label>
                         <textarea id="project-description" rows="6"
-                            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition resize-none"
+                            class="input-field w-full resize-none"
                             placeholder="Describe your project in detail. Include goals, target audience, key features, and any specific requirements or constraints..."></textarea>
-                        <p class="text-xs text-slate-500 mt-2">The more detail you provide, the better the generated documentation will be.</p>
+                        <p class="text-xs text-gray-500 mt-2">The more detail you provide, the better the generated documentation will be.</p>
                     </div>
 
-                    <div class="flex items-center justify-between pt-4">
-                        <div class="text-sm text-slate-400">
-                            <i class="fas fa-shield-alt mr-2"></i>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 gap-4">
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-shield-alt icon-blue mr-2"></i>
                             Your data is reviewed for privacy before any API calls
                         </div>
-                        <button type="submit" id="submit-btn"
-                            class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition flex items-center space-x-2">
+                        <button type="submit" id="submit-btn" class="btn-primary flex items-center space-x-2 w-full sm:w-auto justify-center">
                             <span>Analyze Project</span>
-                            <i class="fas fa-arrow-right"></i>
+                            <i class="fas fa-arrow-right text-sm"></i>
                         </button>
                     </div>
                 </form>
             </div>
 
             <!-- Recent Projects -->
-            <div class="mt-8">
-                <h3 class="text-lg font-semibold mb-4">Recent Projects</h3>
+            <div class="mt-10">
+                <h3 class="text-lg font-semibold mb-5 text-gray-200">Recent Projects</h3>
                 <div id="recent-projects" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Projects will be loaded here -->
-                    <div class="text-slate-500 text-sm col-span-full text-center py-8">
-                        <i class="fas fa-folder-open text-4xl mb-3 block opacity-50"></i>
-                        No projects yet. Create your first one above!
+                    <div class="empty-state col-span-full text-center py-12 px-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-tertiary mb-4">
+                            <i class="fas fa-folder-open text-2xl text-gray-500"></i>
+                        </div>
+                        <p class="text-gray-400 font-medium">No projects yet</p>
+                        <p class="text-gray-500 text-sm mt-1">Create your first project above to get started</p>
                     </div>
                 </div>
             </div>
@@ -145,22 +459,22 @@
 
         <!-- Step 2: Discovery Results -->
         <section id="section-discovery" class="hidden fade-in">
-            <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
-                <div class="flex items-center justify-between mb-6">
+            <div class="card p-6 sm:p-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                     <div>
-                        <h2 class="text-2xl font-bold">Discovery Results</h2>
-                        <p class="text-slate-400">Review what we found in your project description</p>
+                        <h2 class="text-2xl font-bold mb-1">Discovery Results</h2>
+                        <p class="text-gray-400">Review what we found in your project description</p>
                     </div>
-                    <button onclick="goBack()" class="text-slate-400 hover:text-white transition">
+                    <button onclick="goBack()" class="text-gray-400 hover:text-white transition flex items-center text-sm">
                         <i class="fas fa-arrow-left mr-2"></i>Back
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <!-- Domains -->
-                    <div class="bg-slate-900 rounded-lg p-4">
-                        <h3 class="font-semibold mb-3 flex items-center">
-                            <i class="fas fa-layer-group text-blue-400 mr-2"></i>
+                    <div class="nested-card p-5">
+                        <h3 class="font-semibold mb-4 flex items-center text-gray-200">
+                            <i class="fas fa-layer-group icon-blue mr-3"></i>
                             Identified Domains
                         </h3>
                         <div id="domains-list" class="space-y-2">
@@ -169,9 +483,9 @@
                     </div>
 
                     <!-- Stakeholders -->
-                    <div class="bg-slate-900 rounded-lg p-4">
-                        <h3 class="font-semibold mb-3 flex items-center">
-                            <i class="fas fa-users text-green-400 mr-2"></i>
+                    <div class="nested-card p-5">
+                        <h3 class="font-semibold mb-4 flex items-center text-gray-200">
+                            <i class="fas fa-users icon-success mr-3"></i>
                             Stakeholders
                         </h3>
                         <div id="stakeholders-list" class="space-y-2">
@@ -180,9 +494,9 @@
                     </div>
 
                     <!-- Research Agents -->
-                    <div class="bg-slate-900 rounded-lg p-4 md:col-span-2">
-                        <h3 class="font-semibold mb-3 flex items-center">
-                            <i class="fas fa-robot text-purple-400 mr-2"></i>
+                    <div class="nested-card p-5 md:col-span-2">
+                        <h3 class="font-semibold mb-4 flex items-center text-gray-200">
+                            <i class="fas fa-robot icon-rust mr-3"></i>
                             Generated Research Agents
                         </h3>
                         <div id="agents-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -191,11 +505,10 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end mt-6">
-                    <button onclick="showPrivacyReview()"
-                        class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition flex items-center space-x-2">
+                <div class="flex justify-end mt-8">
+                    <button onclick="showPrivacyReview()" class="btn-primary flex items-center space-x-2">
                         <span>Continue to Privacy Review</span>
-                        <i class="fas fa-arrow-right"></i>
+                        <i class="fas fa-arrow-right text-sm"></i>
                     </button>
                 </div>
             </div>
@@ -203,13 +516,13 @@
 
         <!-- Step 3: Privacy Review -->
         <section id="section-privacy" class="hidden fade-in">
-            <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
-                <div class="flex items-center justify-between mb-6">
+            <div class="card p-6 sm:p-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                     <div>
-                        <h2 class="text-2xl font-bold">Privacy Review</h2>
-                        <p class="text-slate-400">Review flagged content before sending to AI</p>
+                        <h2 class="text-2xl font-bold mb-1">Privacy Review</h2>
+                        <p class="text-gray-400">Review flagged content before sending to AI</p>
                     </div>
-                    <button onclick="showDiscovery()" class="text-slate-400 hover:text-white transition">
+                    <button onclick="showDiscovery()" class="text-gray-400 hover:text-white transition flex items-center text-sm">
                         <i class="fas fa-arrow-left mr-2"></i>Back
                     </button>
                 </div>
@@ -218,27 +531,29 @@
                     <!-- Privacy flags loaded here -->
                 </div>
 
-                <div id="no-privacy-issues" class="hidden text-center py-8">
-                    <i class="fas fa-check-circle text-green-400 text-4xl mb-3"></i>
-                    <p class="text-green-400 font-medium">No privacy concerns detected</p>
-                    <p class="text-slate-400 text-sm">Your project description appears safe to process</p>
+                <div id="no-privacy-issues" class="hidden text-center py-10">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/10 mb-4">
+                        <i class="fas fa-check-circle text-3xl text-green-400"></i>
+                    </div>
+                    <p class="text-green-400 font-semibold text-lg">No privacy concerns detected</p>
+                    <p class="text-gray-500 text-sm mt-1">Your project description appears safe to process</p>
                 </div>
 
-                <div class="bg-slate-900 rounded-lg p-4 mb-6">
-                    <h3 class="font-semibold mb-2">What will be sent to Claude API:</h3>
-                    <pre id="sanitized-preview" class="text-sm text-slate-400 whitespace-pre-wrap"></pre>
+                <div class="nested-card p-5 mb-6">
+                    <h3 class="font-semibold mb-3 text-gray-200">What will be sent to Claude API:</h3>
+                    <pre id="sanitized-preview" class="text-sm text-gray-400 whitespace-pre-wrap font-mono bg-surface-primary p-4 rounded-lg"></pre>
                 </div>
 
-                <div class="flex items-center justify-between">
-                    <label class="flex items-center cursor-pointer">
-                        <input type="checkbox" id="privacy-consent" class="mr-3 w-5 h-5 rounded">
-                        <span class="text-sm">I approve sending this data to the Claude API for processing</span>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-border-subtle">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" id="privacy-consent" class="mr-3">
+                        <span class="text-sm text-gray-300 group-hover:text-white transition">I approve sending this data to the Claude API for processing</span>
                     </label>
                     <button onclick="startGeneration()" id="approve-btn"
-                        class="bg-green-500 hover:bg-green-600 disabled:bg-slate-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg font-medium transition flex items-center space-x-2"
+                        class="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full sm:w-auto justify-center"
                         disabled>
                         <span>Approve & Generate</span>
-                        <i class="fas fa-check"></i>
+                        <i class="fas fa-check text-sm"></i>
                     </button>
                 </div>
             </div>
@@ -246,68 +561,63 @@
 
         <!-- Step 4: Generation Progress & Results -->
         <section id="section-results" class="hidden fade-in">
-            <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold">Document Generation</h2>
-                        <p id="generation-status" class="text-slate-400">Generating your project documentation...</p>
-                    </div>
+            <div class="card p-6 sm:p-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-1">Document Generation</h2>
+                    <p id="generation-status" class="text-gray-400">Generating your project documentation...</p>
                 </div>
 
                 <!-- Progress -->
-                <div id="progress-section" class="mb-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium">Progress</span>
-                        <span id="progress-text" class="text-sm text-slate-400">0 / 15 documents</span>
+                <div id="progress-section" class="mb-8">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm font-medium text-gray-300">Progress</span>
+                        <span id="progress-text" class="text-sm text-gray-500">0 / 15 documents</span>
                     </div>
-                    <div class="w-full bg-slate-900 rounded-full h-3">
-                        <div id="progress-bar" class="bg-blue-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="progress-track">
+                        <div id="progress-bar" class="progress-fill" style="width: 0%"></div>
                     </div>
                 </div>
 
                 <!-- Real-time Folder Tree -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <!-- Folder Structure -->
-                    <div class="bg-slate-900 rounded-lg p-4">
-                        <h3 class="font-semibold mb-3 flex items-center">
-                            <i class="fas fa-folder-tree text-yellow-400 mr-2"></i>
+                    <div class="nested-card p-5">
+                        <h3 class="font-semibold mb-4 flex items-center text-gray-200">
+                            <i class="fas fa-folder-tree icon-warning mr-3"></i>
                             Project Structure
                         </h3>
                         <div id="folder-tree" class="font-mono text-sm space-y-1">
-                            <!-- Tree structure will be built here -->
-                            <div class="text-slate-500">Initializing...</div>
+                            <div class="text-gray-500">Initializing...</div>
                         </div>
                     </div>
 
                     <!-- Activity Log -->
-                    <div class="bg-slate-900 rounded-lg p-4">
-                        <h3 class="font-semibold mb-3 flex items-center">
-                            <i class="fas fa-terminal text-green-400 mr-2"></i>
+                    <div class="nested-card p-5">
+                        <h3 class="font-semibold mb-4 flex items-center text-gray-200">
+                            <i class="fas fa-terminal icon-success mr-3"></i>
                             Live Activity
                         </h3>
-                        <div id="activity-log" class="font-mono text-xs space-y-1 max-h-64 overflow-y-auto">
+                        <div id="activity-log" class="font-mono text-xs space-y-2 max-h-64 overflow-y-auto pr-2">
                             <!-- Activity entries will appear here -->
                         </div>
                     </div>
                 </div>
 
                 <!-- Generated Documents Grid -->
-                <div class="mt-6">
-                    <h3 class="font-semibold mb-3">Generated Documents</h3>
+                <div class="mt-8">
+                    <h3 class="font-semibold mb-4 text-gray-200">Generated Documents</h3>
                     <div id="documents-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <!-- Documents loaded here -->
                     </div>
                 </div>
 
                 <!-- Actions -->
-                <div id="results-actions" class="hidden flex items-center justify-between mt-6 pt-6 border-t border-slate-700">
-                    <button onclick="downloadAll()"
-                        class="bg-slate-700 hover:bg-slate-600 px-6 py-3 rounded-lg font-medium transition flex items-center space-x-2">
+                <div id="results-actions" class="hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-8 pt-6 border-t border-border-subtle gap-4">
+                    <button onclick="downloadAll()" class="btn-secondary flex items-center justify-center space-x-2">
                         <i class="fas fa-download"></i>
                         <span>Download All</span>
                     </button>
-                    <button onclick="startNew()"
-                        class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition flex items-center space-x-2">
+                    <button onclick="startNew()" class="btn-primary flex items-center justify-center space-x-2">
                         <i class="fas fa-plus"></i>
                         <span>New Project</span>
                     </button>
@@ -317,31 +627,33 @@
     </main>
 
     <!-- Document Preview Modal -->
-    <div id="modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div class="flex items-center justify-between p-4 border-b border-slate-700">
-                <h3 id="modal-title" class="font-bold text-lg"></h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white">
-                    <i class="fas fa-times text-xl"></i>
+    <div id="modal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="card max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between p-5 border-b border-border-subtle">
+                <h3 id="modal-title" class="font-bold text-lg text-white"></h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition p-1">
+                    <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            <div id="modal-content" class="p-6 overflow-y-auto max-h-[70vh]">
-                <pre class="whitespace-pre-wrap text-sm text-slate-300"></pre>
+            <div id="modal-content" class="p-6 overflow-y-auto max-h-[60vh]">
+                <pre class="whitespace-pre-wrap text-sm text-gray-300 font-mono"></pre>
             </div>
-            <div class="p-4 border-t border-slate-700 flex justify-end space-x-3">
-                <button onclick="copyDocument()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg transition">
-                    <i class="fas fa-copy mr-2"></i>Copy
+            <div class="p-5 border-t border-border-subtle flex flex-col sm:flex-row justify-end gap-3">
+                <button onclick="copyDocument()" class="btn-secondary flex items-center justify-center space-x-2">
+                    <i class="fas fa-copy"></i>
+                    <span>Copy</span>
                 </button>
-                <button onclick="downloadDocument()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition">
-                    <i class="fas fa-download mr-2"></i>Download
+                <button onclick="downloadDocument()" class="btn-primary flex items-center justify-center space-x-2">
+                    <i class="fas fa-download"></i>
+                    <span>Download</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Toast Notifications -->
-    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-3 z-50 max-w-sm"></div>
 
-    <script src="/static/js/app.js?v=3"></script>
+    <script src="/static/js/app.js?v=5"></script>
 </body>
 </html>
