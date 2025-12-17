@@ -61,14 +61,14 @@ function updateStatus(text, color) {
         red: 'text-red-400'
     };
     const dotClasses = {
-        green: 'bg-green-400',
-        yellow: 'bg-yellow-400',
-        red: 'bg-red-400'
+        green: 'bg-green-500',
+        yellow: 'bg-yellow-500',
+        red: 'bg-red-500'
     };
-    indicator.className = `flex items-center text-sm ${colorClasses[color]}`;
+    indicator.className = `flex items-center space-x-2 text-sm`;
     indicator.innerHTML = `
-        <span class="w-2 h-2 ${dotClasses[color]} rounded-full mr-2 pulse-dot"></span>
-        ${text}
+        <span class="w-2 h-2 ${dotClasses[color]} rounded-full ${color === 'green' ? 'pulse-status' : ''}"></span>
+        <span class="${colorClasses[color]} font-medium">${text}</span>
     `;
 }
 
@@ -83,23 +83,26 @@ async function loadRecentProjects() {
 
         if (projects.length === 0) {
             container.innerHTML = `
-                <div class="text-slate-500 text-sm col-span-full text-center py-8">
-                    <i class="fas fa-folder-open text-4xl mb-3 block opacity-50"></i>
-                    No projects yet. Create your first one above!
+                <div class="empty-state col-span-full text-center py-12 px-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-tertiary mb-4">
+                        <i class="fas fa-folder-open text-2xl text-gray-500"></i>
+                    </div>
+                    <p class="text-gray-400 font-medium">No projects yet</p>
+                    <p class="text-gray-500 text-sm mt-1">Create your first project above to get started</p>
                 </div>
             `;
             return;
         }
 
         container.innerHTML = projects.slice(0, 6).map(project => `
-            <div class="bg-slate-900 rounded-lg p-4 cursor-pointer card-hover transition-all duration-300"
+            <div class="nested-card p-4 cursor-pointer hover:border-iyeska-rust/50 transition-all duration-300"
                  onclick="loadProject('${project.id}')">
                 <div class="flex items-start justify-between mb-2">
-                    <h4 class="font-medium truncate">${escapeHtml(project.name)}</h4>
+                    <h4 class="font-medium truncate text-white">${escapeHtml(project.name)}</h4>
                     <span class="text-xs px-2 py-1 rounded ${getStatusClass(project.status)}">${project.status}</span>
                 </div>
-                <p class="text-sm text-slate-400 line-clamp-2">${escapeHtml(project.description?.substring(0, 100) || '')}</p>
-                <p class="text-xs text-slate-500 mt-2">${formatDate(project.created_at)}</p>
+                <p class="text-sm text-gray-400 line-clamp-2">${escapeHtml(project.description?.substring(0, 100) || '')}</p>
+                <p class="text-xs text-gray-500 mt-2">${formatDate(project.created_at)}</p>
             </div>
         `).join('');
     } catch (error) {
@@ -181,34 +184,34 @@ function renderDiscovery() {
     const domainsList = document.getElementById('domains-list');
     const domains = discoveryData.domains || [];
     domainsList.innerHTML = domains.length ? domains.map(d => `
-        <div class="flex items-center bg-slate-800 rounded px-3 py-2">
-            <i class="fas fa-tag text-blue-400 mr-2"></i>
-            <span>${escapeHtml(d)}</span>
+        <div class="flex items-center bg-surface-tertiary rounded-lg px-3 py-2 border border-border-subtle">
+            <i class="fas fa-tag text-iyeska-blue mr-2"></i>
+            <span class="text-white">${escapeHtml(d)}</span>
         </div>
-    `).join('') : '<p class="text-slate-500 text-sm">No domains identified</p>';
+    `).join('') : '<p class="text-gray-500 text-sm">No domains identified</p>';
 
     // Stakeholders
     const stakeholdersList = document.getElementById('stakeholders-list');
     const stakeholders = discoveryData.stakeholders || [];
     stakeholdersList.innerHTML = stakeholders.length ? stakeholders.map(s => `
-        <div class="flex items-center bg-slate-800 rounded px-3 py-2">
+        <div class="flex items-center bg-surface-tertiary rounded-lg px-3 py-2 border border-border-subtle">
             <i class="fas fa-user text-green-400 mr-2"></i>
-            <span>${escapeHtml(s)}</span>
+            <span class="text-white">${escapeHtml(s)}</span>
         </div>
-    `).join('') : '<p class="text-slate-500 text-sm">No stakeholders identified</p>';
+    `).join('') : '<p class="text-gray-500 text-sm">No stakeholders identified</p>';
 
     // Agents
     const agentsList = document.getElementById('agents-list');
     const agents = discoveryData.agents || [];
     agentsList.innerHTML = agents.length ? agents.map(a => `
-        <div class="bg-slate-800 rounded px-3 py-2">
+        <div class="bg-surface-tertiary rounded-lg px-3 py-2 border border-border-subtle">
             <div class="flex items-center mb-1">
-                <i class="fas fa-robot text-purple-400 mr-2"></i>
-                <span class="font-medium">${escapeHtml(a.name || a)}</span>
+                <i class="fas fa-robot text-iyeska-rust mr-2"></i>
+                <span class="font-medium text-white">${escapeHtml(a.name || a)}</span>
             </div>
-            ${a.description ? `<p class="text-xs text-slate-400">${escapeHtml(a.description)}</p>` : ''}
+            ${a.description ? `<p class="text-xs text-gray-400">${escapeHtml(a.description)}</p>` : ''}
         </div>
-    `).join('') : '<p class="text-slate-500 text-sm">No agents generated</p>';
+    `).join('') : '<p class="text-gray-500 text-sm">No agents generated</p>';
 }
 
 // Show privacy review
@@ -297,20 +300,20 @@ function initializeFolderTree() {
 
     const treeContainer = document.getElementById('folder-tree');
     treeContainer.innerHTML = `
-        <div class="text-slate-400">
+        <div class="text-gray-400">
             <div class="flex items-center">
-                <i class="fas fa-folder text-yellow-400 mr-2"></i>
+                <i class="fas fa-folder text-iyeska-rust mr-2"></i>
                 <span>${escapeHtml(areaDisplay)}</span>
             </div>
-            <div class="ml-4 border-l border-slate-700 pl-3 mt-1">
+            <div class="ml-4 border-l border-border-subtle pl-3 mt-1">
                 <div class="flex items-center" id="tree-project">
-                    <i class="fas fa-folder-open text-yellow-400 mr-2"></i>
+                    <i class="fas fa-folder-open text-iyeska-rust mr-2"></i>
                     <span class="text-white font-medium">${escapeHtml(projectName)}</span>
-                    <i class="fas fa-spinner fa-spin text-blue-400 ml-2 text-xs"></i>
+                    <i class="fas fa-spinner fa-spin text-iyeska-blue ml-2 text-xs"></i>
                 </div>
-                <div class="ml-4 border-l border-slate-700 pl-3 mt-1 space-y-1" id="tree-folders">
+                <div class="ml-4 border-l border-border-subtle pl-3 mt-1 space-y-1" id="tree-folders">
                     ${['00-Overview', '10-Discovery', '20-Planning', '30-Execution', '40-Comms', '90-Archive'].map(folder => `
-                        <div class="flex items-center text-slate-500" id="tree-folder-${folder}">
+                        <div class="flex items-center text-gray-500" id="tree-folder-${folder}">
                             <i class="fas fa-folder mr-2"></i>
                             <span>${folder}</span>
                             <span class="ml-2 text-xs" id="tree-folder-count-${folder}"></span>
@@ -326,7 +329,7 @@ function initializeFolderTree() {
 function updateFolderTree(folder, docCount) {
     const folderEl = document.getElementById(`tree-folder-${folder}`);
     if (folderEl) {
-        folderEl.classList.remove('text-slate-500');
+        folderEl.classList.remove('text-gray-500');
         folderEl.classList.add('text-green-400');
         folderEl.querySelector('i').classList.remove('fa-folder');
         folderEl.querySelector('i').classList.add('fa-folder-open');
@@ -362,8 +365,8 @@ function addFileToTree(folder, filename) {
         folderEl.parentNode.insertBefore(fileEntry, folderEl.nextSibling);
 
         // Update folder appearance
-        folderEl.classList.remove('text-slate-500');
-        folderEl.classList.add('text-yellow-400');
+        folderEl.classList.remove('text-gray-500');
+        folderEl.classList.add('text-iyeska-rust');
         folderEl.querySelector('i').classList.remove('fa-folder');
         folderEl.querySelector('i').classList.add('fa-folder-open');
     }
@@ -375,7 +378,7 @@ function addActivity(message, type = 'info') {
     if (!logContainer) return;
 
     const colors = {
-        info: 'text-blue-400',
+        info: 'text-iyeska-blue',
         success: 'text-green-400',
         warning: 'text-yellow-400',
         error: 'text-red-400'
@@ -393,7 +396,7 @@ function addActivity(message, type = 'info') {
     entry.className = `flex items-start ${colors[type]} fade-in`;
     entry.innerHTML = `
         <i class="fas ${icons[type]} mr-2 mt-0.5"></i>
-        <span class="text-slate-500 mr-2">[${timestamp}]</span>
+        <span class="text-gray-500 mr-2">[${timestamp}]</span>
         <span>${escapeHtml(message)}</span>
     `;
 
@@ -459,13 +462,13 @@ async function pollGenerationStatus() {
 
                 // Update documents grid
                 documentsGrid.innerHTML = status.documents.map(doc => `
-                    <div class="bg-slate-900 rounded-lg p-4 cursor-pointer card-hover transition-all"
+                    <div class="nested-card p-4 cursor-pointer hover:border-iyeska-rust/50 transition-all duration-300"
                          onclick="viewDocument('${escapeHtml(doc.name)}', \`${escapeHtml(doc.content || '')}\`)">
                         <div class="flex items-center mb-2">
                             <i class="fas fa-file-alt text-green-400 mr-2"></i>
-                            <span class="font-medium">${escapeHtml(doc.name)}</span>
+                            <span class="font-medium text-white">${escapeHtml(doc.name)}</span>
                         </div>
-                        <p class="text-xs text-slate-400">${escapeHtml(doc.folder || '00-Overview')}</p>
+                        <p class="text-xs text-gray-400">${escapeHtml(doc.folder || '00-Overview')}</p>
                     </div>
                 `).join('');
             }
@@ -527,13 +530,13 @@ async function loadGeneratedDocuments() {
 
         const documentsGrid = document.getElementById('documents-grid');
         documentsGrid.innerHTML = generatedDocuments.map(doc => `
-            <div class="bg-slate-900 rounded-lg p-4 cursor-pointer card-hover transition-all"
+            <div class="nested-card p-4 cursor-pointer hover:border-iyeska-rust/50 transition-all duration-300"
                  onclick="viewDocument('${escapeHtml(doc.name)}', '${doc.id}')">
                 <div class="flex items-center mb-2">
                     <i class="fas fa-file-alt text-green-400 mr-2"></i>
-                    <span class="font-medium">${escapeHtml(doc.name)}</span>
+                    <span class="font-medium text-white">${escapeHtml(doc.name)}</span>
                 </div>
-                <p class="text-xs text-slate-400">${escapeHtml(doc.category || '')}</p>
+                <p class="text-xs text-gray-400">${escapeHtml(doc.category || '')}</p>
             </div>
         `).join('');
 
@@ -666,22 +669,52 @@ async function loadProject(projectId) {
 // Update step indicator
 function setStep(step) {
     currentStep = step;
+    const stepNames = ['', 'Describe', 'Review', 'Approve', 'Generate'];
+
+    // Update mobile step indicator
+    const mobileStepNum = document.getElementById('current-step-num');
+    const mobileStepName = document.getElementById('current-step-name');
+    if (mobileStepNum) mobileStepNum.textContent = step;
+    if (mobileStepName) mobileStepName.textContent = stepNames[step];
+
+    // Update desktop step indicator
     for (let i = 1; i <= 4; i++) {
         const el = document.getElementById(`step-${i}`);
-        const circle = el.querySelector('div');
+        if (!el) continue;
+
+        const circle = el.querySelector('.step-circle');
+        const label = el.querySelector('span');
+        const connector = document.getElementById(`connector-${i}`);
+
+        // Reset classes
+        el.classList.remove('step-active', 'step-completed', 'step-pending');
 
         if (i < step) {
-            el.classList.remove('opacity-50');
-            circle.className = 'w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-sm font-bold';
-            circle.innerHTML = '<i class="fas fa-check"></i>';
+            // Completed step
+            el.classList.add('step-completed');
+            if (circle) {
+                circle.className = 'step-circle';
+                circle.innerHTML = '<i class="fas fa-check"></i>';
+            }
+            if (label) label.className = 'ml-3 text-sm font-medium text-white';
+            if (connector) connector.classList.add('completed');
         } else if (i === step) {
-            el.classList.remove('opacity-50');
-            circle.className = 'w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold';
-            circle.textContent = i;
+            // Active step
+            el.classList.add('step-active');
+            if (circle) {
+                circle.className = 'step-circle';
+                circle.textContent = i;
+            }
+            if (label) label.className = 'ml-3 text-sm font-medium text-white';
         } else {
-            el.classList.add('opacity-50');
-            circle.className = 'w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold';
-            circle.textContent = i;
+            // Pending step
+            el.classList.add('step-pending');
+            if (circle) {
+                circle.className = 'step-circle';
+                circle.textContent = i;
+            }
+            if (label) label.className = 'ml-3 text-sm font-medium text-gray-500';
+            if (connector) connector.classList.remove('completed');
         }
     }
 }
@@ -689,11 +722,11 @@ function setStep(step) {
 // Toast notifications
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
-    const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500',
-        warning: 'bg-yellow-500'
+    const iconColors = {
+        success: 'text-green-400',
+        error: 'text-red-400',
+        info: 'text-iyeska-blue',
+        warning: 'text-yellow-400'
     };
     const icons = {
         success: 'fa-check-circle',
@@ -703,10 +736,10 @@ function showToast(message, type = 'info') {
     };
 
     const toast = document.createElement('div');
-    toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 fade-in`;
+    toast.className = `toast toast-${type} flex items-center space-x-3`;
     toast.innerHTML = `
-        <i class="fas ${icons[type]}"></i>
-        <span>${escapeHtml(message)}</span>
+        <i class="fas ${icons[type]} ${iconColors[type]}"></i>
+        <span class="text-sm text-white">${escapeHtml(message)}</span>
     `;
 
     container.appendChild(toast);
@@ -714,6 +747,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(100px)';
+        toast.style.transition = 'all 0.3s ease';
         setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
@@ -738,8 +772,8 @@ function formatDate(dateStr) {
 
 function getStatusClass(status) {
     const classes = {
-        pending: 'bg-slate-600 text-slate-200',
-        processing: 'bg-blue-500/20 text-blue-400',
+        pending: 'bg-gray-600/30 text-gray-300',
+        processing: 'bg-iyeska-blue/20 text-iyeska-blue-light',
         completed: 'bg-green-500/20 text-green-400',
         failed: 'bg-red-500/20 text-red-400'
     };
