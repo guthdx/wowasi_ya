@@ -1,7 +1,7 @@
 # Prompt Enhancement Project - Status Report
-**Date:** December 15, 2025
-**Status:** Phase 1 Complete - 3 Pilot Documents Enhanced
-**Next Session:** Continue with remaining 12 document types
+**Date:** December 27, 2025
+**Status:** ✅ COMPLETE - All 15 Documents Enhanced
+**Next Session:** Production testing with Llama 3.3 70B
 
 ---
 
@@ -19,7 +19,7 @@ Generated documents were **too generic and not professional enough** - they look
 
 ```
 Stage 1: Claude (with web search)
-├─ NEW: Frameworks research agent (runs on EVERY project)
+├─ Frameworks research agent (runs on EVERY project)
 │  ├─ Gathers professional standards (SMART, RACI, risk matrices, etc.)
 │  ├─ Finds concrete examples of senior-level documentation
 │  ├─ Extracts industry templates and best practices
@@ -29,74 +29,173 @@ Stage 1: Claude (with web search)
 
 Stage 2: Llama (or Claude fallback)
 ├─ Receives frameworks research from Stage 1
-├─ Uses document-type-specific expert prompts
+├─ Uses document-type-specific expert prompts (ALL 15 NOW ENHANCED)
 ├─ Generates with senior-level quality markers
 └─ Cross-references previous documents
 ```
 
-### Changes Made
+---
 
-#### 1. New Frameworks Research Agent
-**File:** `src/wowasi_ya/core/agent_discovery.py`
+## All 15 Enhanced Prompts
 
-- Added `_create_documentation_framework_agent()` method
-- Agent ID: `agent_000_frameworks`
-- Priority: 1 (runs first)
-- Searches for:
-  - Professional frameworks (SMART goals, RACI, risk matrices, Gantt)
-  - Concrete examples of senior-level docs
-  - Document structure templates
-  - "Senior vs junior" quality markers
+### Phase 1 - Pilot Documents (December 15, 2025)
 
-#### 2. Enhanced Research Prompts
-**File:** `src/wowasi_ya/core/research.py`
-
-- Added `_build_frameworks_research_prompt()` method
-- Special prompt for frameworks agent that emphasizes:
-  - CONCRETE, SPECIFIC information (not vague principles)
-  - Minimum 5-7 examples across document types
-  - Structured output: Key Findings, Professional Examples, Frameworks, Senior vs Junior Markers
-  - Focus on nonprofit/tribal/public sector contexts
-
-#### 3. Document-Specific Generation Prompts
-**File:** `src/wowasi_ya/core/generator.py`
-
-Created three specialized prompts (PILOT DOCUMENTS):
-
-**A. Budget Prompt (`_build_budget_prompt()`)**
+**1. Initial Budget (`_build_budget_prompt()`)**
 - Role: "Senior Program Director with 15+ years managing multi-million dollar budgets"
 - Requirements: 7+ sections, 1500+ words, budget summary table
 - Structure: Budget Overview, Personnel, Operating, Indirect, Narrative, ROI, Risks
 - Quality markers: Strategic thinking, evidence-based, anticipatory, risk-aware
-- Includes GOOD vs BAD examples to show what senior-level looks like
 
-**B. Risks Prompt (`_build_risks_prompt()`)**
+**2. Risks and Assumptions (`_build_risks_prompt()`)**
 - Role: "Senior Risk Management Analyst with 15+ years"
 - Requirements: 9+ sections, 8-12 risks, 2000+ words, risk register table
 - Structure: Overview, Matrix, Strategic/Operational/Financial/Compliance Risks, Assumptions
 - Quality markers: Quantitative assessment, specificity, actionable mitigation, cascading analysis
-- Provides risk matrix template with Likelihood × Impact scales
 
-**C. SOPs Prompt (`_build_sops_prompt()`)**
+**3. SOPs (`_build_sops_prompt()`)**
 - Role: "Senior Operations Manager with 15+ years"
 - Requirements: 8+ sections, 6-8 complete SOPs, 2000+ words, RACI matrix
 - Structure: Overview, RACI, Core Procedures, Communications, Quality, Change Management
 - Quality markers: Procedural clarity, tool-specific, exception handling, quality gates
-- Includes detailed SOP example with numbered steps
 
-**D. Generic Prompt (Fallback)**
-- Created `_build_generic_prompt()` for remaining 12 document types
-- Original prompt logic preserved for documents not yet enhanced
+### Phase 2 - Strategic Documents (December 27, 2025)
 
-#### 4. Helper Methods Added
-**File:** `src/wowasi_ya/core/generator.py`
+**4. Goals and Success Criteria (`_build_goals_prompt()`)**
+- Role: "Senior Strategic Planner with 15+ years"
+- Requirements: 8+ sections, 2000+ words, SMART goals table, OKR framework
+- Structure: Executive Summary, Strategic Vision, Objectives, KPIs, Success Metrics, Dependencies
+- Quality markers: SMART format, measurable targets, baseline comparisons, milestone tracking
+- Includes: Metrics tracking table with baselines/targets/measurement methods
 
-- `_extract_frameworks_research()` - Pulls frameworks agent results for injection into prompts
-- Updated `_build_generation_prompt()` - Routes to specialized or generic prompt based on doc type
+**5. Timeline and Milestones (`_build_timeline_prompt()`)**
+- Role: "Senior Project Manager with 15+ years (PMP preferred)"
+- Requirements: 8+ sections, 1800+ words, Gantt-style ASCII timeline
+- Structure: Overview, Critical Path, Phase Breakdown, Dependencies, Risk Buffers, Resource Loading
+- Quality markers: Critical path identification, float calculations, dependency mapping
+- Includes: ASCII timeline visualization with milestones
+
+**6. Project Brief (`_build_project_brief_prompt()`)**
+- Role: "Senior Program Director with 15+ years writing executive briefings"
+- Requirements: 10+ sections, 2000+ words, executive summary format
+- Structure: One-Page Summary, Background, Objectives, Scope, Budget, Timeline, Team, Risks, Success Criteria, Approvals
+- Quality markers: Decision-enabling, C-suite ready, strategic alignment, investment thesis
+
+**7. Stakeholder Notes (`_build_stakeholder_prompt()`)**
+- Role: "Senior Stakeholder Engagement Specialist with 15+ years"
+- Requirements: 9+ sections, 2000+ words, power/interest grid, RACI matrix
+- Structure: Overview, Mapping, Power/Interest Analysis, Engagement Strategy, Communication Plan
+- Quality markers: Political awareness, influence mapping, engagement cadence, risk identification
+- Includes: Power/Interest grid visualization, stakeholder register table
+
+### Phase 3 - Planning Documents (December 27, 2025)
+
+**8. Scope and Boundaries (`_build_scope_prompt()`)**
+- Role: "Senior Project Manager with 15+ years of scope management experience"
+- Requirements: 10+ sections, 1800+ words, in-scope/out-of-scope tables
+- Structure: Executive Summary, In-Scope, Out-of-Scope, Deliverables, Constraints, Assumptions, Change Control
+- Quality markers: Clear boundaries, scope creep prevention, change management process
+- Includes: Deliverables table with acceptance criteria
+
+**9. Process Workflow (`_build_process_workflow_prompt()`)**
+- Role: "Senior Process Engineer with 15+ years in process design"
+- Requirements: 8+ sections, 2000+ words, ASCII process diagrams
+- Structure: Overview, Core Workflows, Decision Points, Handoffs, Exception Handling, Integration
+- Quality markers: Clear swim lanes, decision logic, error handling, SLA awareness
+- Includes: ASCII workflow diagrams for each major process
+
+**10. Context and Background (`_build_context_prompt()`)**
+- Role: "Senior Policy Analyst with 15+ years in environmental scanning"
+- Requirements: 9+ sections, 2000+ words, PESTLE analysis table
+- Structure: Executive Summary, Historical, Current State, PESTLE Analysis, Stakeholder Landscape, Gaps, Opportunities
+- Quality markers: Evidence-based, properly cited, systems thinking, tribal/cultural context
+- Includes: PESTLE analysis table with implications
+
+### Phase 4 - Operational Documents (December 27, 2025)
+
+**11. Task Backlog (`_build_task_backlog_prompt()`)**
+- Role: "Senior Agile Coach with 15+ years in project delivery"
+- Requirements: 8+ sections, 1800+ words, prioritized task tables
+- Structure: Overview, Epic Breakdown, Sprint/Phase Planning, MoSCoW Prioritization, Dependencies, Acceptance Criteria
+- Quality markers: Clear prioritization, effort estimation, dependency awareness, definition of done
+- Includes: Backlog table with MoSCoW priority and effort estimates
+
+**12. Meeting Notes (`_build_meeting_notes_prompt()`)**
+- Role: "Senior Executive Assistant with 15+ years supporting C-suite"
+- Requirements: 6+ sections, meeting templates, action item tracking
+- Structure: Template Overview, Kickoff Agenda, Status Meeting Template, Decision Log, Action Items, RACI
+- Quality markers: Clear ownership, deadline tracking, decision documentation, escalation paths
+- Includes: Meeting agenda template, action item tracker table
+
+**13. Status Updates (`_build_status_updates_prompt()`)**
+- Role: "Senior PMO Director with 15+ years in executive reporting"
+- Requirements: 8+ sections, 1500+ words, RAG status dashboard
+- Structure: Executive Dashboard, Overall Status, Milestone Progress, Budget Status, Risks, Escalations, Next Period
+- Quality markers: RAG indicators, trend analysis, variance reporting, executive-ready
+- Includes: RAG status table with trend indicators
+
+### Phase 5 - Reference Documents (December 27, 2025)
+
+**14. README (`_build_readme_prompt()`)**
+- Role: "Senior Technical Writer with 15+ years in documentation"
+- Requirements: 10+ sections, 1500+ words, document navigation table
+- Structure: Project Overview, Quick Start, Document Index, Team, Contact, FAQ, Changelog
+- Quality markers: Scannable, well-organized, cross-referenced, onboarding-friendly
+- Includes: Document navigation table with links to all 15 docs
+
+**15. Glossary (`_build_glossary_prompt()`)**
+- Role: "Senior Technical Editor with 15+ years in terminology management"
+- Requirements: 6+ sections, 1200+ words, A-Z definitions
+- Structure: Overview, Project Terms, Domain Terms, Acronyms, Cross-References, Sources
+- Quality markers: Consistent format, cross-referenced, context-appropriate, tribal/cultural sensitivity
+- Includes: Alphabetized definition tables with sources
 
 ---
 
-## Test Results
+## Technical Implementation
+
+### Prompt Routing (generator.py:207-236)
+
+```python
+prompt_builders = {
+    # Phase 1 - Enhanced pilot documents
+    DocumentType.INITIAL_BUDGET: self._build_budget_prompt,
+    DocumentType.RISKS_ASSUMPTIONS: self._build_risks_prompt,
+    DocumentType.SOPS: self._build_sops_prompt,
+    # Phase 2 - Strategic documents
+    DocumentType.GOALS_SUCCESS: self._build_goals_prompt,
+    DocumentType.TIMELINE_MILESTONES: self._build_timeline_prompt,
+    DocumentType.PROJECT_BRIEF: self._build_project_brief_prompt,
+    DocumentType.STAKEHOLDER_NOTES: self._build_stakeholder_prompt,
+    # Phase 3 - Planning documents
+    DocumentType.SCOPE_BOUNDARIES: self._build_scope_prompt,
+    DocumentType.PROCESS_WORKFLOW: self._build_process_workflow_prompt,
+    DocumentType.CONTEXT_BACKGROUND: self._build_context_prompt,
+    # Phase 4 - Operational documents
+    DocumentType.TASK_BACKLOG: self._build_task_backlog_prompt,
+    DocumentType.MEETING_NOTES: self._build_meeting_notes_prompt,
+    DocumentType.STATUS_UPDATES: self._build_status_updates_prompt,
+    # Phase 5 - Reference documents
+    DocumentType.README: self._build_readme_prompt,
+    DocumentType.GLOSSARY: self._build_glossary_prompt,
+}
+```
+
+### Each Prompt Includes
+
+1. **Expert Persona** - Senior-level role with 15+ years experience
+2. **Project Context** - Name, description, domain, key constraints
+3. **Research Findings** - Compiled from Claude web search agents
+4. **Frameworks Knowledge** - Professional standards from frameworks agent
+5. **Previous Documents** - Cross-reference context for consistency
+6. **Required Structure** - Specific sections and formatting
+7. **GOOD vs BAD Examples** - Show what senior-level looks like
+8. **Quality Markers** - Specific traits to demonstrate
+9. **Strict Constraints** - Hallucination prevention, format rules
+10. **Output Format** - Markdown with tables/diagrams
+
+---
+
+## Test Results (Phase 1)
 
 ### Test Project Details
 - **Name:** Tribal Youth Mentorship Program
@@ -112,29 +211,6 @@ Created three specialized prompts (PILOT DOCUMENTS):
 | **Risks Quality** | Error | 12 risks, full analysis | ✅ Senior-level |
 | **SOPs Quality** | Error | 8 SOPs, RACI matrix | ✅ Senior-level |
 
-### Quality Improvements Observed
-
-**Budget Document:**
-- ✅ Specific cost ranges ($485K-$565K) with strategic justifications
-- ✅ ROI analysis comparing to alternatives ($8K-$14K vs $30K-$50K)
-- ✅ Risk-aware contingency planning (5% reserve)
-- ✅ Cross-references 3+ other documents
-- ✅ Professional terminology throughout
-
-**Risks Document:**
-- ✅ Quantitative risk matrix (3×3 Likelihood × Impact)
-- ✅ Executive summary with top 5 critical risks
-- ✅ Specific risk statements (not vague)
-- ✅ Concrete mitigation strategies with contingency plans
-- ✅ Risk owner assignments
-
-**SOPs Document:**
-- ✅ Complete RACI matrix (6 roles × 14 activities)
-- ✅ 6-8 detailed SOPs with numbered procedures
-- ✅ Specific timeframes (Days 1-3, Week 2)
-- ✅ Prerequisites, quality checks, escalation paths
-- ✅ Version control procedures
-
 ### Example Quality Comparison
 
 **BEFORE (Generic Prompt):**
@@ -145,154 +221,50 @@ Created three specialized prompts (PILOT DOCUMENTS):
 
 ---
 
-## Current State
-
-### Enhanced Documents (3 of 15)
-1. ✅ **Initial Budget** - Full senior-level prompt
-2. ✅ **Risks and Assumptions** - Full senior-level prompt
-3. ✅ **Standard Operating Procedures (SOPs)** - Full senior-level prompt
-
-### Still Using Generic Prompt (12 of 15)
-4. ⏳ README (Project Overview)
-5. ⏳ Project Brief
-6. ⏳ Glossary
-7. ⏳ Context and Background
-8. ⏳ Stakeholder Notes
-9. ⏳ Goals and Success Criteria
-10. ⏳ Scope and Boundaries
-11. ⏳ Timeline and Milestones
-12. ⏳ Process Workflow
-13. ⏳ Task Backlog
-14. ⏳ Meeting Notes
-15. ⏳ Status Updates
-
----
-
-## Next Steps
-
-### Option A: Complete Rollout (Recommended)
-Create enhanced prompts for all 12 remaining document types.
-
-**High Priority (Strategic Documents):**
-1. Goals and Success Criteria - Needs SMART framework, OKRs
-2. Timeline and Milestones - Needs Gantt conventions, critical path
-3. Project Brief - Needs executive summary structure
-4. Stakeholder Notes - Needs power/interest grid analysis
-
-**Medium Priority (Planning Documents):**
-5. Scope and Boundaries - Needs in/out structure
-6. Process Workflow - Needs process mapping conventions
-7. Context and Background - Needs environmental scanning framework
-
-**Lower Priority (Ongoing/Template Documents):**
-8. Task Backlog - Needs sprint/kanban structure
-9. Meeting Notes - Needs agenda/minutes template
-10. Status Updates - Needs dashboard/metrics structure
-11. README - Needs executive summary conventions
-12. Glossary - Needs term definition standards
-
-### Option B: Selective Enhancement
-Keep hybrid approach - only enhance critical documents where quality matters most (Goals, Timeline, Project Brief, Stakeholder Notes).
-
-### Option C: Evaluate First
-Deploy current 3-document enhancement to production, gather feedback, then decide scope of further enhancements.
-
----
-
-## Technical Notes
-
-### Code Architecture
-- **Prompt routing:** `_build_generation_prompt()` checks `doc_type` and routes to specialized or generic
-- **Frameworks extraction:** `_extract_frameworks_research()` pulls agent_000_frameworks results
-- **Fallback logic:** If frameworks agent fails, provides fallback scaffolding in prompt
-
-### Environment Configuration
-**IMPORTANT:** `.env` was temporarily changed for testing:
-- `GENERATION_PROVIDER=claude` (for testing since Mac was offline)
-- **Production should use:** `GENERATION_PROVIDER=llamacpp` (local Llama 3.3 70B)
-- Fallback to Claude is automatic via `LLAMACPP_FALLBACK_TO_CLAUDE=true`
-
-### Agent Discovery Change
-- Agent counter starts at 2 (not 1) since frameworks agent uses priority 1
-- Frameworks agent always inserted first via `agents.insert(0, framework_agent)`
-
-### Research Phase
-- Frameworks agent uses special prompt: `_build_frameworks_research_prompt()`
-- Standard domain agents use original prompt: `_build_research_prompt()`
-- Both executed in parallel by research engine
-
----
-
 ## Files Modified
 
 ### Core Business Logic
 - `src/wowasi_ya/core/agent_discovery.py` - Added frameworks agent
 - `src/wowasi_ya/core/research.py` - Added frameworks research prompt
-- `src/wowasi_ya/core/generator.py` - Added 3 specialized prompts + routing
+- `src/wowasi_ya/core/generator.py` - Added 15 specialized prompts + dictionary-based routing
 
 ### Configuration
 - `.env` - Temporarily set to `GENERATION_PROVIDER=claude` for testing
-- `.env.example` - Should be updated with documentation about prompt enhancement
-
-### Other Modified Files (not critical to prompt work)
-- `src/wowasi_ya/api/routes.py`
-- `src/wowasi_ya/cli.py`
-- `src/wowasi_ya/config.py`
-- `src/wowasi_ya/core/output.py`
-- `src/wowasi_ya/models/document.py`
-- `src/wowasi_ya/models/project.py`
+- **Production should use:** `GENERATION_PROVIDER=llamacpp` (local Llama 3.3 70B)
 
 ---
 
-## Performance Impact
+## Next Steps
 
-### Cost Analysis
-- **Additional research agent:** +1 Claude API call per project (~$0.10-0.20)
-- **Frameworks research:** More comprehensive, longer response (~$0.20-0.40)
-- **Total added cost:** ~$0.30-0.60 per project
-- **Benefit:** Significantly improved document quality
+### Immediate (Testing Phase)
 
-### Time Impact
-- Research phase: +30-60 seconds (1 additional agent)
-- Generation phase: No change (same number of documents)
-- **Total:** Minimal impact (~1 minute per project)
+1. [ ] Verify Mac/Llama server is online: `curl https://llama.iyeska.net/health`
+2. [ ] Set `.env` to `GENERATION_PROVIDER=llamacpp` for production
+3. [ ] Run full test generation with all 15 enhanced prompts
+4. [ ] Compare output quality across all document types
+5. [ ] Measure token usage and generation time
 
----
+### Future Enhancements
 
-## Testing Checklist
-
-When resuming work:
-- [ ] Review this document and CLAUDE.md
-- [ ] Check `.env` settings (should be `GENERATION_PROVIDER=llamacpp` for production)
-- [ ] Verify Mac/Llama server is online: `curl https://llama.iyeska.net/health`
-- [ ] Test with sample project to verify prompts work
-- [ ] Decide on rollout strategy (Option A/B/C above)
-- [ ] Create enhanced prompts for next batch of documents
-- [ ] Update documentation in CLAUDE.md when complete
-
----
-
-## Questions for User
-
-Before proceeding with full rollout:
-1. Which documents are most important to your use cases?
-2. Would you prefer all 15 enhanced or keep some generic?
-3. Any specific quality issues with the 3 pilot documents?
-4. Should we prioritize different document types first?
+1. **Context-Specific Prompts** - Add industry/domain-specific variations (healthcare, education, tribal governance)
+2. **Prompt Tuning** - Adjust based on real-world feedback
+3. **Template Library** - Allow users to select prompt intensity (brief vs comprehensive)
+4. **Multi-Language Support** - Lakota/Dakota terminology integration
 
 ---
 
 ## Success Criteria
 
-✅ **Completed:**
+✅ **COMPLETED:**
 - Frameworks research agent created and tested
-- 3 pilot document prompts enhanced (Budget, Risks, SOPs)
-- Test generation shows 21x word count increase
-- Quality demonstrates senior-level characteristics
-- System works end-to-end
+- All 15 document prompts enhanced with senior-level expert personas
+- Dictionary-based routing for clean code architecture
+- GOOD/BAD examples in each prompt for quality guidance
+- Cross-document consistency enforcement
+- Hallucination prevention guards in all prompts
 
-⏳ **Remaining:**
-- 12 document types still need enhanced prompts
-- Production testing with Llama (Mac was offline during test)
-- User feedback on pilot document quality
-- Documentation updates in CLAUDE.md
+⏳ **Pending:**
+- Production testing with Llama 3.3 70B
+- Performance benchmarking (token usage, generation time)
+- User feedback on document quality
+- CLAUDE.md documentation update
