@@ -67,6 +67,28 @@ docker compose logs -f                           # Logs
 docker compose down                              # Stop
 ```
 
+## Local Development with Traefik
+
+```bash
+# 1. Start Traefik (if not already running)
+cd ~/terminal_projects/claude_code/traefik && docker compose up -d
+
+# 2. Start Wowasi_ya
+cd ~/terminal_projects/claude_code/wowasi_ya
+docker compose up -d
+```
+
+**Access via Traefik (recommended):**
+- API: http://wowasi.localhost
+- API Docs: http://wowasi.localhost/docs
+- Traefik Dashboard: http://traefik.localhost
+
+**Direct port access (fallback):**
+- API: http://localhost:8001
+
+**Port Allocation** (per PORT_REGISTRY.md):
+- API: 8001
+
 ## Architecture
 
 ### Hybrid LLM Strategy

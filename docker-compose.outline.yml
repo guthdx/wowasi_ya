@@ -1,0 +1,291 @@
+# Docker Compose for Outline Wiki + Wowasi_ya Portal
+#
+# This extends the base wowasi_ya setup with Outline for document management.
+#
+# Port Allocations (per PORT_REGISTRY.md):
+#   outline-postgres: 5437
+#   outline-minio API: 9002 (h2 uses 9000)
+#   outline-minio console: 9003 (h2 uses 9001)
+#   outline web: 3010
+#   portal: 3003
+#   wowasi_ya: 8001 (unchanged)
+#
+# Access via Traefik (recommended):
+#   Outline: http://docs.localhost
+#   Portal: http://portal.localhost
+#   Wowasi API: http://wowasi.localhost
+#   MinIO Console: http://minio-outline.localhost (admin only)
+#
+# Production (Cloudflare Tunnel):
+#   Add to ~/.cloudflared/config.yml:
+#   - hostname: docs.iyeska.net
+#     service: http://localhost:3010
+#   - hostname: portal.iyeska.net
+#     service: http://localhost:3003
+#
+# First-time setup:
+#   1. Copy .env.outline.example to .env.outline
+#   2. Generate secrets: openssl rand -hex 32
+#   3. Set up Google OAuth at https://console.cloud.google.com/apis/credentials
+#   4. Run: docker compose -f docker-compose.outline.yml up -d
+
+services:
+  # =============================================================================
+  # OUTLINE WIKI
+  # =============================================================================
+  outline:
+    image: outlinewiki/outline:latest
+    container_name: outline
+    depends_on:
+      outline-postgres:
+        condition: service_healthy
+      outline-redis:
+        condition: service_healthy
+      outline-minio-init:
+        condition: service_completed_successfully
+    environment:
+      # Core
+      - NODE_ENV=production
+      - SECRET_KEY=${OUTLINE_SECRET_KEY}
+      - UTILS_SECRET=${OUTLINE_UTILS_SECRET}
+      - URL=${OUTLINE_URL:-http://docs.localhost}
+      - PORT=3000
+
+      # Database
+      - DATABASE_URL=postgres://outline:${OUTLINE_DB_PASSWORD}@outline-postgres:5432/outline
+      - DATABASE_CONNECTION_POOL_MIN=1
+      - DATABASE_CONNECTION_POOL_MAX=10
+      - PGSSLMODE=disable
+
+      # Redis
+      - REDIS_URL=redis://outline-redis:6379
+
+      # S3-compatible storage (MinIO)
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER:-outline}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - AWS_REGION=us-east-1
+      - AWS_S3_UPLOAD_BUCKET_URL=${MINIO_BUCKET_URL:-http://outline-minio:9000}
+      - AWS_S3_UPLOAD_BUCKET_NAME=outline
+      - AWS_S3_FORCE_PATH_STYLE=true
+      - AWS_S3_ACL=private
+
+      # Authentication - Google OAuth (easiest option)
+      # Get credentials at: https://console.cloud.google.com/apis/credentials
+      # Authorized redirect URI: https://docs.iyeska.net/auth/google.callback
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+
+      # Optional: Generic OIDC (for Zitadel/Keycloak/Authentik)
+      # Uncomment and configure if using your NetBird Zitadel instance
+      # - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      # - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET}
+      # - OIDC_AUTH_URI=${OIDC_AUTH_URI}
+      # - OIDC_TOKEN_URI=${OIDC_TOKEN_URI}
+      # - OIDC_USERINFO_URI=${OIDC_USERINFO_URI}
+      # - OIDC_DISPLAY_NAME=Iyeska SSO
+
+      # Features
+      - FORCE_HTTPS=${OUTLINE_FORCE_HTTPS:-false}
+      - ENABLE_UPDATES=true
+      - DEFAULT_LANGUAGE=en_US
+
+      # Rate limiting
+      - RATE_LIMITER_ENABLED=true
+      - RATE_LIMITER_REQUESTS=1000
+      - RATE_LIMITER_DURATION_WINDOW=60
+    ports:
+      - "3010:3000"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.outline.rule=Host(`docs.localhost`)"
+      - "traefik.http.services.outline.loadbalancer.server.port=3000"
+    networks:
+      - traefik-dev
+      - outline-internal
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================================================================
+  # POSTGRESQL (Outline dedicated) - Port 5437 per PORT_REGISTRY.md
+  # =============================================================================
+  outline-postgres:
+    image: postgres:15-alpine
+    container_name: outline-postgres
+    environment:
+      - POSTGRES_USER=outline
+      - POSTGRES_PASSWORD=${OUTLINE_DB_PASSWORD}
+      - POSTGRES_DB=outline
+    volumes:
+      - outline_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5437:5432"
+    restart: unless-stopped
+    networks:
+      - outline-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U outline -d outline"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # REDIS (Outline dedicated) - Internal only
+  # =============================================================================
+  outline-redis:
+    image: redis:7-alpine
+    container_name: outline-redis
+    restart: unless-stopped
+    networks:
+      - outline-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # MINIO (S3-compatible storage) - Ports 9002/9003 (h2 uses 9000/9001)
+  # =============================================================================
+  outline-minio:
+    image: minio/minio:latest
+    container_name: outline-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-outline}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BROWSER_REDIRECT_URL=${MINIO_CONSOLE_URL:-http://minio-outline.localhost}
+    volumes:
+      - outline_minio_data:/data
+    ports:
+      - "9002:9000"   # API
+      - "9003:9001"   # Console
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio-outline.rule=Host(`minio-outline.localhost`)"
+      - "traefik.http.services.minio-outline.loadbalancer.server.port=9001"
+    networks:
+      - traefik-dev
+      - outline-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================================================================
+  # MINIO BUCKET SETUP (one-time initialization)
+  # =============================================================================
+  outline-minio-init:
+    image: minio/mc:latest
+    container_name: outline-minio-init
+    depends_on:
+      outline-minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set minio http://outline-minio:9000 ${MINIO_ROOT_USER:-outline} ${MINIO_ROOT_PASSWORD};
+      mc mb minio/outline --ignore-existing;
+      mc anonymous set download minio/outline;
+      echo 'Bucket outline created and configured';
+      exit 0;
+      "
+    networks:
+      - outline-internal
+
+  # =============================================================================
+  # WOWASI_YA (existing service with Outline integration)
+  # =============================================================================
+  wowasi:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: wowasi_ya
+    depends_on:
+      outline:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8001}:8001"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - HOST=0.0.0.0
+      - PORT=8001
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - OUTPUT_DIR=/app/output
+      - DATABASE_URL=sqlite+aiosqlite:///./data/wowasi_ya.db
+      - STRICT_PRIVACY_MODE=${STRICT_PRIVACY_MODE:-true}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - ENABLE_WEB_SEARCH=${ENABLE_WEB_SEARCH:-true}
+      # Outline integration
+      - OUTLINE_API_URL=http://outline:3000
+      - OUTLINE_API_KEY=${OUTLINE_API_KEY}
+    volumes:
+      - wowasi_output:/app/output
+      - wowasi_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wowasi.rule=Host(`wowasi.localhost`)"
+      - "traefik.http.services.wowasi.loadbalancer.server.port=8001"
+    networks:
+      - traefik-dev
+      - outline-internal
+      - default
+
+  # =============================================================================
+  # PORTAL (Next Steps UI - thin React layer) - Port 3003 per PORT_REGISTRY.md
+  # =============================================================================
+  # NOTE: This container requires the portal/ directory to be created first.
+  # Uncomment once the portal frontend is implemented (Phase 3).
+  #
+  # portal:
+  #   build:
+  #     context: ./portal
+  #     dockerfile: Dockerfile
+  #   container_name: wowasi_portal
+  #   depends_on:
+  #     - wowasi
+  #     - outline
+  #   ports:
+  #     - "3003:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - VITE_API_URL=${PORTAL_API_URL:-http://wowasi.localhost}
+  #     - VITE_OUTLINE_URL=${OUTLINE_URL:-http://docs.localhost}
+  #   restart: unless-stopped
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.portal.rule=Host(`portal.localhost`)"
+  #     - "traefik.http.services.portal.loadbalancer.server.port=3000"
+  #   networks:
+  #     - traefik-dev
+  #     - outline-internal
+
+volumes:
+  outline_postgres_data:
+    driver: local
+  outline_minio_data:
+    driver: local
+  wowasi_output:
+    driver: local
+  wowasi_data:
+    driver: local
+
+networks:
+  traefik-dev:
+    external: true
+  outline-internal:
+    driver: bridge

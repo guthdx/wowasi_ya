@@ -1,16 +1,17 @@
 # Docker Compose for Wowasi_ya
-# Port 8001 chosen to avoid conflicts with n8n (5678), RECAP (8088), Stoic (3333)
 #
-# Usage:
-#   Development: docker compose up
-#   Production:  docker compose up -d
+# Access via Traefik (recommended):
+#   API: http://wowasi.localhost
 #
-# Cloudflare Tunnel Setup (on iyeska.net):
-#   1. Add to ~/.cloudflared/config.yml:
-#      - hostname: wowasi.iyeska.net
-#        service: http://localhost:8001
-#   2. Add CNAME record in Cloudflare DNS
-#   3. sudo systemctl restart cloudflared
+# Direct port access (fallback):
+#   API: http://localhost:8001
+#
+# Port 8001 chosen to avoid conflicts with other projects (see PORT_REGISTRY.md)
+#
+# Production (via Cloudflare Tunnel):
+#   Add to ~/.cloudflared/config.yml:
+#   - hostname: wowasi.iyeska.net
+#     service: http://localhost:8001
 
 services:
   wowasi:
@@ -19,7 +20,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: wowasi_ya
     ports:
-      - "8001:8001"
+      - "${PORT:-8001}:8001"
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - HOST=0.0.0.0
@@ -46,9 +47,20 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wowasi.rule=Host(`wowasi.localhost`)"
+      - "traefik.http.services.wowasi.loadbalancer.server.port=8001"
+    networks:
+      - traefik-dev
+      - default
 
 volumes:
   wowasi_output:
     driver: local
   wowasi_data:
     driver: local
+
+networks:
+  traefik-dev:
+    external: true
