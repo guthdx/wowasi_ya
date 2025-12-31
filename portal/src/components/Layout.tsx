@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { ProviderToggle } from './ProviderToggle';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Layout() {
   const location = useLocation();
@@ -11,20 +12,22 @@ export function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center gap-3">
-                <img
-                  src="/iyeska-logo.png"
-                  alt="Iyeska"
-                  className="h-10 w-auto"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
+              <Link to="/" className="flex items-center gap-4">
+                <div className="flex-shrink-0 p-1.5 bg-white dark:bg-charcoal rounded-lg shadow-sm border border-slate/10 dark:border-slate/20">
+                  <img
+                    src="/iyeska-logo.png"
+                    alt="Iyeska"
+                    className="h-12 w-auto"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
                 <div className="flex flex-col">
-                  <span className="logo-text text-xl text-charcoal dark:text-white">
+                  <span className="logo-text text-2xl text-charcoal dark:text-white">
                     Wowasi Ya
                   </span>
-                  <span className="text-xs text-slate dark:text-slate-light">
+                  <span className="text-sm text-slate dark:text-slate-light">
                     Project Documentation Assistant
                   </span>
                 </div>
@@ -44,7 +47,10 @@ export function Layout() {
               </nav>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
+              {/* Theme Toggle */}
+              <ThemeToggle />
+
               {/* Provider Toggle */}
               <ProviderToggle />
 
