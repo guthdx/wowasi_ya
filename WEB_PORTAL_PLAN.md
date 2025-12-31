@@ -258,13 +258,15 @@ This is what makes us different. Each document type has predefined actions.
 
 **Goal:** Get Outline running and accessible
 
-- [ ] Deploy Outline stack via docker-compose.outline.yml
-- [ ] Configure Google OAuth authentication
-- [ ] Set up Cloudflare tunnel for docs.iyeska.net
-- [ ] Create first collection manually to verify everything works
-- [ ] Generate Outline API key for wowasi_ya integration
+- [x] Deploy Outline stack via docker-compose.outline.yml
+- [x] Configure authentication (Zitadel OIDC - Google OAuth doesn't support personal Gmail)
+- [x] Set up Cloudflare tunnel for docs.iyeska.net
+- [x] Create first collection manually to verify everything works
+- [x] Generate Outline API key for wowasi_ya integration
 
-**Deliverable:** Outline accessible at https://docs.iyeska.net
+**Deliverable:** Outline accessible at https://docs.iyeska.net ✅
+
+**Completed:** 2025-12-30 - API key: `ol...qj2s`, Test collection: "Test Project"
 
 ---
 
@@ -272,15 +274,17 @@ This is what makes us different. Each document type has predefined actions.
 
 **Goal:** Generated documents automatically publish to Outline
 
-- [ ] Install `outline-wiki-api` Python package
-- [ ] Create Outline integration service in wowasi_ya
-- [ ] Add `/publish-to-outline` endpoint
-- [ ] Implement collection creation (one per project)
-- [ ] Implement document creation (15 docs per collection)
-- [ ] Store Outline IDs in wowasi_ya database
-- [ ] Test end-to-end: generate → publish → view in Outline
+- [x] Install `outline-wiki-api` Python package
+- [x] Create Outline integration service in wowasi_ya (`src/wowasi_ya/core/outline.py`)
+- [x] Add `/publish-to-outline` endpoint
+- [x] Implement collection creation (one per project)
+- [x] Implement document creation (15 docs per collection)
+- [ ] Store Outline IDs in wowasi_ya database (deferred to Phase 3)
+- [x] Test end-to-end: generate → publish → view in Outline
 
-**Deliverable:** Running `wowasi generate` creates an Outline collection with all 15 docs
+**Deliverable:** Running `wowasi generate` creates an Outline collection with all 15 docs ✅
+
+**Completed:** 2025-12-30 - API endpoint working, tested with mock project
 
 ---
 

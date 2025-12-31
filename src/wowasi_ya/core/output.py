@@ -1,6 +1,5 @@
 """Output Manager - Write generated documents to various destinations."""
 
-import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -263,6 +262,42 @@ class GoogleDriveWriter(OutputWriter):
         return sanitized.strip()
 
 
+class OutlineWriter(OutputWriter):
+    """Write documents to Outline Wiki."""
+
+    def __init__(self, enable_sharing: bool = False) -> None:
+        """Initialize Outline writer.
+
+        Args:
+            enable_sharing: Enable public sharing links for collections.
+        """
+        self.enable_sharing = enable_sharing
+
+    async def write(self, project: GeneratedProject, destination: Path) -> list[str]:
+        """Publish documents to Outline Wiki.
+
+        Args:
+            project: Generated project with documents.
+            destination: Ignored for Outline (uses API).
+
+        Returns:
+            List of Outline document URLs.
+        """
+        from wowasi_ya.core.outline import OutlinePublisher
+
+        publisher = OutlinePublisher()
+        result = await publisher.publish(project, enable_sharing=self.enable_sharing)
+
+        # Build list of URLs
+        urls: list[str] = [result.collection.url]
+        urls.extend(doc.url for doc in result.documents)
+
+        if result.public_url:
+            urls.insert(0, f"Public: {result.public_url}")
+
+        return urls
+
+
 class OutputManager:
     """Manager for writing generated projects to various outputs."""
 
@@ -283,14 +318,18 @@ class OutputManager:
 
         Args:
             project: Generated project to write.
-            output_format: Output format (filesystem, obsidian, git, gdrive).
+            output_format: Output format (filesystem, obsidian, git, gdrive, outline).
 
         Returns:
-            List of output paths.
+            List of output paths/URLs.
         """
         writer: OutputWriter
 
-        if output_format == "gdrive":
+        if output_format == "outline":
+            # Outline uses API, not filesystem
+            writer = OutlineWriter(enable_sharing=False)
+            return await writer.write(project, self.settings.output_dir)
+        elif output_format == "gdrive":
             writer = GoogleDriveWriter(
                 remote_path=self.settings.gdrive_remote_path,
                 local_cache=self.settings.output_dir,

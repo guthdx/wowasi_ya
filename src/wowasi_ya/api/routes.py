@@ -279,6 +279,99 @@ async def get_project_result(
     }
 
 
+class PublishToOutlineRequest(BaseModel):
+    """Request to publish project to Outline Wiki."""
+
+    enable_sharing: bool = Field(
+        default=False,
+        description="Enable public sharing link for the collection",
+    )
+
+
+class PublishToOutlineResponse(BaseModel):
+    """Response from publishing to Outline Wiki."""
+
+    project_id: str
+    collection_url: str
+    collection_id: str
+    document_urls: list[str]
+    public_url: str | None = None
+    message: str
+
+
+@router.post(
+    "/projects/{project_id}/publish-to-outline",
+    response_model=PublishToOutlineResponse,
+)
+async def publish_to_outline(
+    project_id: str,
+    request: PublishToOutlineRequest,
+    user: RequireAuth,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> PublishToOutlineResponse:
+    """Publish a completed project to Outline Wiki.
+
+    Creates a collection in Outline and uploads all documents.
+    Only available after generation is complete.
+    """
+    from wowasi_ya.core.outline import OutlinePublisher
+    from wowasi_ya.models.document import Document, GeneratedProject
+
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if state.status != ProjectStatus.COMPLETED:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Project not completed. Current status: {state.status}",
+        )
+
+    # Check if Outline is configured
+    if not settings.outline_api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="Outline API key not configured. Set OUTLINE_API_KEY environment variable.",
+        )
+
+    # Reconstruct GeneratedProject from stored data
+    documents = [Document(**d) for d in state.generated_documents]
+    generated_project = GeneratedProject(
+        project_name=state.input.name,
+        project_area=state.input.area or "04_Iyeska",
+        documents=documents,
+    )
+
+    # Publish to Outline
+    try:
+        publisher = OutlinePublisher(settings=settings)
+        result = await publisher.publish(
+            generated_project,
+            enable_sharing=request.enable_sharing,
+        )
+
+        # Store Outline URLs in project state
+        outline_urls = [result.collection.url] + [d.url for d in result.documents]
+        state.output_paths.extend([f"outline:{url}" for url in outline_urls])
+
+        return PublishToOutlineResponse(
+            project_id=project_id,
+            collection_url=result.collection.url,
+            collection_id=result.collection.id,
+            document_urls=[d.url for d in result.documents],
+            public_url=result.public_url,
+            message=f"Successfully published {len(result.documents)} documents to Outline",
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to publish to Outline: {e}",
+        ) from e
+
+
 @router.get("/projects")
 async def list_projects(user: RequireAuth) -> list[dict]:
     """List all projects for the current user."""

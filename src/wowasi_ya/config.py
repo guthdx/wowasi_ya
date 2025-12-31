@@ -71,6 +71,11 @@ class Settings(BaseSettings):
     llamacpp_timeout: int = 300  # 5 minutes for large documents
     llamacpp_fallback_to_claude: bool = True  # Fallback when Mac offline
 
+    # Outline Wiki Integration
+    outline_api_url: str = "https://docs.iyeska.net"
+    outline_api_key: SecretStr | None = Field(default=None, description="Outline API key")
+    outline_auto_publish: bool = False  # Auto-publish on generation
+
     @property
     def is_development(self) -> bool:
         """Check if running in development mode."""

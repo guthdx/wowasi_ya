@@ -28,6 +28,7 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "rich>=13.7.0",
     "jinja2>=3.1.0",
+    "outline-wiki-api>=0.3.0",
 ]
 
 [project.optional-dependencies]
