@@ -70,12 +70,12 @@ class ClaudeClient:
         self._client: Any = None
 
     def _ensure_client(self) -> Any:
-        """Lazily initialize the Anthropic client."""
+        """Lazily initialize the Anthropic async client."""
         if self._client is None:
             try:
                 import anthropic
 
-                self._client = anthropic.Anthropic(
+                self._client = anthropic.AsyncAnthropic(
                     api_key=self.settings.anthropic_api_key.get_secret_value()
                 )
             except ImportError:
@@ -101,7 +101,7 @@ class ClaudeClient:
         client = self._ensure_client()
 
         try:
-            response = client.messages.create(
+            response = await client.messages.create(
                 model=self.settings.claude_model,
                 max_tokens=max_tokens,
                 temperature=temperature,

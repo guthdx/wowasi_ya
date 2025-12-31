@@ -66,12 +66,12 @@ class ResearchEngine:
         self._client: Any = None
 
     def _ensure_client(self) -> Any:
-        """Lazily initialize the Anthropic client."""
+        """Lazily initialize the Anthropic async client."""
         if self._client is None:
             try:
                 import anthropic
 
-                self._client = anthropic.Anthropic(
+                self._client = anthropic.AsyncAnthropic(
                     api_key=self.settings.anthropic_api_key.get_secret_value()
                 )
             except ImportError:
@@ -104,7 +104,7 @@ class ResearchEngine:
             if self.config.enable_web_search and self.settings.enable_web_search:
                 tools = [{"type": "web_search_20250305"}]
 
-            response = client.messages.create(
+            response = await client.messages.create(
                 model=self.settings.claude_model,
                 max_tokens=self.settings.max_generation_tokens,
                 tools=tools if tools else None,
