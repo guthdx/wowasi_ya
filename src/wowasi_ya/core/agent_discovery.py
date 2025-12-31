@@ -264,7 +264,7 @@ class AgentDiscoveryService:
                         project, match, template
                     ),
                     search_queries=self._generate_search_queries(project, match, template),
-                    priority=agent_counter,
+                    priority=min(agent_counter, 5),  # Cap at 5 (model constraint)
                 )
                 agents.append(agent)
                 agent_counter += 1
