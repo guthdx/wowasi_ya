@@ -5,13 +5,26 @@ services:
       dockerfile: Dockerfile
     container_name: wowasi-portal
     restart: unless-stopped
-    ports:
-      - "3003:80"
+    # Traefik handles routing - no direct port needed
+    # ports:
+    #   - "3003:80"
     environment:
       - VITE_API_URL=https://wowasi.iyeska.net/api/v1
       - VITE_OUTLINE_URL=https://docs.iyeska.net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
       interval: 30s
       timeout: 10s
       retries: 3
+    # Traefik integration
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portal.rule=Host(`portal.localhost`)"
+      - "traefik.http.services.portal.loadbalancer.server.port=80"
+    networks:
+      - traefik-dev
+      - default
+
+networks:
+  traefik-dev:
+    external: true
