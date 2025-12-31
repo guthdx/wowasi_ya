@@ -50,6 +50,8 @@ def create_app() -> FastAPI:
         else [
             "https://portal.iyeska.net",
             "https://wowasi.iyeska.net",
+            "http://localhost:3003",  # Local development
+            "http://localhost:3000",  # Alternative dev port
         ]
     )
     app.add_middleware(
