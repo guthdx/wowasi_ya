@@ -12,35 +12,6 @@ from wowasi_ya.config import Settings, get_settings
 from wowasi_ya.core.llm_client import BaseLLMClient, get_generation_client
 
 logger = logging.getLogger(__name__)
-
-# Conservative writing style rules to avoid obvious AI crutches
-# (Per user request: "less aggressive" - only target clear AI tells)
-WRITING_STYLE_RULES = """
-### WRITING STYLE (avoid obvious AI tells)
-
-**Punctuation:**
-- Avoid em dashes (—). Use commas, parentheses, or separate sentences instead.
-- Exception: You may use 1-2 em dashes maximum if truly needed.
-
-**Banned Vocabulary:** Never use these AI-associated terms:
-- delve, tapestry, realm, vibrant, bustling, harness
-- leverage (use "use" or "apply"), utilize (use "use")
-- seamlessly, meticulous, intricate, pivotal
-- underscore, embark, navigate, landscape, foster
-- cutting-edge (use "modern" or "new")
-- holistic, synergy, synergistic, paradigm
-
-**Transitions:** Avoid these formulaic transitions:
-- Furthermore, Moreover, In addition, Additionally
-- Firstly, Secondly, Thirdly, In conclusion, To summarize
-- Use natural flow instead. Start next thought directly when possible.
-
-**Openings:** Never start a document or section with:
-- "In today's..." or "In an era of..."
-- "In the ever-evolving landscape..."
-- Start with specific facts or direct statements instead.
-"""
-
 from wowasi_ya.models.agent import AgentResult
 from wowasi_ya.models.document import (
     DOCUMENT_BATCHES,
@@ -317,8 +288,6 @@ class DocumentGenerator:
 4. **DO NOT include:** Marketing language, sales pitches, or promotional content
 5. **DO NOT contradict:** Information from previous documents - maintain consistency across all documentation
 
-{WRITING_STYLE_RULES}
-
 ## REQUIRED SECTIONS
 
 Include the following in your document:
@@ -455,8 +424,6 @@ Your document must demonstrate:
 4. **DO use:** Ranges, categories, industry benchmarks, and clearly labeled assumptions
 5. **DO cross-reference:** Previous documents (Goals, Scope, Timeline, Risks) to show integration
 6. **DO acknowledge:** What you don't know ("Pending stakeholder consultation..." or "To be determined during Month 1...")
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -640,8 +607,6 @@ Your document must demonstrate:
 4. **DO cross-reference:** Previous documents to ground risks in project specifics
 5. **DO acknowledge:** Uncertainty ("Based on available information..." "Pending stakeholder consultation...")
 6. **MUST include:** At least 8-12 distinct risks across categories
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -870,8 +835,6 @@ Your document must demonstrate:
 5. **DO cross-reference:** Other project documents (Timeline, Budget, Risks, Process Workflow)
 6. **MUST include:** At least one RACI matrix table
 
-{WRITING_STYLE_RULES}
-
 ### OUTPUT FORMAT
 
 Markdown document starting with: # Standard Operating Procedures
@@ -1058,8 +1021,6 @@ Your document must demonstrate:
 4. **DO cross-reference:** Budget, Timeline, Scope documents to ensure alignment
 5. **DO distinguish:** Outputs (activities) from Outcomes (changes) from Impact (long-term)
 6. **MUST include:** At least one metrics/KPI table in Markdown format
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -1268,8 +1229,6 @@ Your document must demonstrate:
 5. **DO cross-reference:** Budget (resources), Scope (deliverables), Risks (schedule risks)
 6. **MUST include:** At least one milestone table and one visual timeline representation
 
-{WRITING_STYLE_RULES}
-
 ### OUTPUT FORMAT
 
 Markdown document starting with: # Timeline and Milestones
@@ -1438,8 +1397,6 @@ Your document must demonstrate:
 4. **DO include:** Specific numbers and ranges where possible
 5. **DO reference:** Other documents for detailed information
 6. **MUST be:** Self-contained enough to understand project without reading other docs
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -1668,8 +1625,6 @@ Your document must demonstrate:
 5. **DO include:** Both formal authority AND informal influence
 6. **MUST have:** Power/interest grid or equivalent matrix
 
-{WRITING_STYLE_RULES}
-
 ### OUTPUT FORMAT
 
 Markdown document starting with: # Stakeholder Notes
@@ -1793,8 +1748,6 @@ Write a comprehensive Scope and Boundaries document.
 ✓ **Measurable:** Deliverables have acceptance criteria
 ✓ **Change-Ready:** Process for handling scope changes
 ✓ **Integrated:** References Budget, Timeline, Goals documents
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -1959,8 +1912,6 @@ Yes     No      Yes     No
 ✓ **Role-Clear:** Who does what is explicit
 ✓ **Connected:** References SOPs for detailed procedures
 
-{WRITING_STYLE_RULES}
-
 ### OUTPUT FORMAT
 
 Markdown document starting with: # Process Workflow
@@ -2094,8 +2045,6 @@ Write a comprehensive Context and Background document.
 ✓ **Actionable:** Context connects to project decisions
 ✓ **Current:** Uses recent/relevant information
 ✓ **Respectful:** Appropriate framing for community context
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -2238,8 +2187,6 @@ Write a comprehensive Task Backlog document.
 ✓ **Connected:** Links to Goals, Timeline, Scope
 ✓ **Maintainable:** Clear process for updates
 ✓ **Appropriate:** Adapts agile for nonprofit context
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -2403,8 +2350,6 @@ Write a Meeting Notes document with templates and initial meeting entries.
 ✓ **Appropriate:** Respects cultural protocols
 ✓ **Complete:** Captures decisions, not just discussion
 ✓ **Accountable:** Enables follow-up
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -2584,8 +2529,6 @@ Write a Status Updates document with templates and initial entry.
 ✓ **Forward-Looking:** Anticipates next period
 ✓ **Metrics-Driven:** Quantitative where possible
 
-{WRITING_STYLE_RULES}
-
 ### OUTPUT FORMAT
 
 Markdown document starting with: # Status Updates
@@ -2729,8 +2672,6 @@ Write a comprehensive README that serves as the project's central navigation doc
 ✓ **Audience-Aware:** Works for multiple readers
 ✓ **Concise:** Overview without overwhelming detail
 ✓ **Maintained:** Version history shows updates
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
@@ -2884,8 +2825,6 @@ Write a comprehensive Glossary for this project.
 ✓ **Complete:** Covers all terminology in project docs
 ✓ **Organized:** Easy to find terms quickly
 ✓ **Living:** Process for updates
-
-{WRITING_STYLE_RULES}
 
 ### OUTPUT FORMAT
 
