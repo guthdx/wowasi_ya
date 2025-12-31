@@ -6,29 +6,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚨 ACTIVE WORK IN PROGRESS - READ FIRST
 
-**Last Updated:** December 30, 2025
+**Last Updated:** December 31, 2025
 
-**Current Project:** Web Portal & Next Steps Engine - Complete project tracking system
+**Current Project:** Document Quality Improvements - Eliminate AI writing tells
 
-**Status:** Phase 4 Complete - Portal deployed at https://portal.iyeska.net
+**Status:** Quality checker implemented, prompt style guide planned
 
 **📋 Key Documents:**
+- `PROMPT_ENHANCEMENT_STATUS.md` - Document quality improvements (main status doc)
 - `USERS_GUIDE.md` - Complete workflow guide for all tools
 - `API_SECURITY.md` - Endpoint security documentation
 - `WEB_PORTAL_PLAN.md` - Portal implementation details
-- `PROMPT_ENHANCEMENT_STATUS.md` - Document quality improvements
 
 **Recent Completions:**
-- ✅ Phase 1: Outline Wiki integration (publish documents)
-- ✅ Phase 2: Wowasi → Outline API (programmatic publishing)
-- ✅ Phase 3: Next Steps Engine (actionable tasks for each document)
-- ✅ Phase 4: Web Portal (React dashboard at portal.iyeska.net)
+- ✅ All 15 document prompts enhanced with senior expert personas
+- ✅ Quality checker with truncation detection and retry logic
+- ✅ AI vocabulary and filler phrase detection
+- ✅ Quality grading system (A-F grades)
+- ✅ Portal deployed at https://portal.iyeska.net
+
+**In Progress:**
+- 🔄 Test generation with quality improvements
+- 📋 Planned: HUMAN_WRITING_STYLE constant to ban AI tells in prompts
 
 **Quick Summary:**
-- Portal provides visual project tracking at https://portal.iyeska.net
-- Next Steps Engine creates actionable tasks for each of 15 documents
-- Read-only endpoints are public for portal access
-- Write operations require HTTP Basic authentication
+- Quality checker now detects AI writing patterns and grades documents
+- Generator retries truncated documents automatically
+- Next step: Add style guide to prompts to prevent AI tells at source
+- See `~/.claude/plans/compiled-sleeping-quail.md` for implementation plan
 
 ---
 

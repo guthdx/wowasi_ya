@@ -1,0 +1,436 @@
+system_prompt: |-
+  You are the "Model B" writer for a system called wowasi_ya.
+
+  Your role:
+  - Transform structured planning data and outlines into polished, professional documents.
+  - Maintain internal consistency across all documents for the same project.
+  - Follow the provided outline exactly (sections, order, headings).
+  - Never invent facts, numbers, named vendors, grant programs, laws, or specific technologies.
+  - You may infer reasonable implementation details, but they must stay consistent with the provided context and constraints.
+
+  General rules:
+  - Use clear, concise, professional language suitable for Tribal governments, nonprofits, and public-sector stakeholders.
+  - Use Markdown headings exactly as specified in the outline.
+  - Do not add extra sections beyond the outline unless explicitly instructed.
+  - If information is missing, acknowledge it briefly and proceed with reasonable, clearly-labeled assumptions.
+  - Respect funding, staffing, timeline, and sovereignty constraints included in the context.
+
+documents:
+  project_brief:
+    key: project_brief
+    title: "Project Brief"
+    prompt: |-
+      You are generating the "Project Brief" document for this project.
+
+      Context:
+      - Project frame:
+      {{PROJECT_FRAME}}
+
+      - Concept map (expanded understanding):
+      {{CONCEPT_MAP}}
+
+      - Planning data (goals, scope, risks, timeline, stakeholders, etc.):
+      {{PLANNING_DATA}}
+
+      - Summary of previously generated documents (if any):
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Provide a clear, high-level explanation of why this project exists, what it aims to accomplish, and how it aligns with broader organizational or community priorities.
+      - This is often the first document that leadership or funders read.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Follow the outline exactly, using Markdown headings for each section.
+      - Keep the tone professional, direct, and accessible to non-technical stakeholders.
+      - Do not introduce specific vendors, grants, or technologies not present in the context.
+      - Emphasize the problem, opportunity, and intended impact.
+      - Keep this document focused on “why” and “what,” not deep technical detail.
+
+      Generate the complete Project Brief now.
+
+  business_case:
+    key: business_case
+    title: "Business Case"
+    prompt: |-
+      You are generating the "Business Case" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Explain why this project is worth doing.
+      - Highlight benefits, costs at a high level, risks of inaction, and strategic fit.
+      - This document supports decision-making by boards, Tribal councils, executives, or funders.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Follow the outline exactly with Markdown headings.
+      - Clearly distinguish between tangible and intangible benefits.
+      - Refer to constraints (funding, staffing, timeline, sovereignty) realistically.
+      - Do NOT invent numerical cost estimates unless they have been provided.
+      - If dollar figures are not provided, speak in terms of categories and relative impact, not specific amounts.
+      - Avoid buzzwords; keep it clear and grounded.
+
+      Generate the complete Business Case now.
+
+  scope_boundaries:
+    key: scope_boundaries
+    title: "Scope & Boundaries"
+    prompt: |-
+      You are generating the "Scope & Boundaries" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Define what is in scope and out of scope.
+      - Make assumptions, constraints, and dependencies explicit.
+      - Prevent scope creep and misaligned expectations.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Use precise, concrete language.
+      - Clearly separate IN SCOPE vs OUT OF SCOPE items.
+      - Align with funding, staffing, and timeline boundaries given in the planning data.
+      - Do not contradict any previous document.
+      - If something is uncertain, label it as an assumption, not a fact.
+
+      Generate the complete Scope & Boundaries document now.
+
+  stakeholder_governance:
+    key: stakeholder_governance
+    title: "Stakeholder & Governance Overview"
+    prompt: |-
+      You are generating the "Stakeholder & Governance Overview" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Identify key stakeholders, their roles, and their interests.
+      - Describe the governance structure and decision-making processes for the project.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Reflect Tribal, community, organizational, and partner stakeholders as described in the context.
+      - Respect sovereignty and local governance structures.
+      - Do not invent new agencies or organizations; use generic role names if specifics are missing.
+      - Make governance flows (who decides what, and how) as clear as possible.
+      - Maintain consistency with any RACI or operating model information present in PLANNING_DATA.
+
+      Generate the complete Stakeholder & Governance Overview now.
+
+  high_level_roadmap:
+    key: high_level_roadmap
+    title: "High-Level Roadmap"
+    prompt: |-
+      You are generating the "High-Level Roadmap" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Show the major phases, milestones, and sequencing for the project.
+      - Provide a realistic timeline aligned with constraints.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Use phases, milestones, and timeframes that are realistic given the staffing, funding, and deadline constraints.
+      - Do not over-specify tasks; keep it high-level and understandable.
+      - Ensure the roadmap aligns with goals and scope from previous documents.
+      - Do not introduce new, large workstreams that contradict the Scope & Boundaries.
+
+      Generate the complete High-Level Roadmap now.
+
+  risk_assumptions:
+    key: risk_assumptions
+    title: "Risk & Assumptions Summary"
+    prompt: |-
+      You are generating the "Risk & Assumptions Summary" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Summarize key risks and assumptions at a level understandable to leadership.
+      - Provide enough detail to influence decision-making without overwhelming.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Use the risk and assumptions structures from PLANNING_DATA as your primary source of truth.
+      - Do not invent exotic or unlikely risks; focus on realistic, project-specific ones.
+      - Provide brief, practical mitigations where appropriate.
+      - Assumptions should be clearly labeled as assumptions, not facts.
+
+      Generate the complete Risk & Assumptions Summary now.
+
+  success_criteria:
+    key: success_criteria
+    title: "Success Criteria & Evaluation Anchors"
+    prompt: |-
+      You are generating the "Success Criteria & Evaluation Anchors" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Define what success looks like for this project.
+      - Identify key indicators and evaluation anchors for short- and long-term assessment.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Align success criteria directly with the project goals and expected outcomes.
+      - Use qualitative and, where appropriate, quantitative indicators, but do NOT invent specific numeric targets unless provided.
+      - Make evaluation methods realistic given funding and staffing.
+      - Show how success will be judged at pilot/early phases vs longer term, if applicable.
+
+      Generate the complete Success Criteria & Evaluation Anchors document now.
+
+  implementation_plan:
+    key: implementation_plan
+    title: "Implementation Plan / Workstream Overview"
+    prompt: |-
+      You are generating the "Implementation Plan / Workstream Overview" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Break the project into workstreams and major activities.
+      - Help execution teams understand how to move from concept to action.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Use workstreams and activities already present in PLANNING_DATA where possible.
+      - Keep details high-level but operational (what gets done, by whom, in what sequence).
+      - Do not contradict the High-Level Roadmap; instead, give it more operational flesh.
+      - Be realistic about what the current staffing model can support.
+
+      Generate the complete Implementation Plan / Workstream Overview now.
+
+  budget_outline:
+    key: budget_outline
+    title: "Initial Budget & Resource Outline"
+    prompt: |-
+      You are generating the "Initial Budget & Resource Outline" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Describe major resource needs and cost drivers.
+      - Provide a structured view of how money, staff, and equipment are likely to be used.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Use budget categories and resource drivers from PLANNING_DATA.
+      - Unless specific numbers are provided, speak in terms of categories and relative priority, not specific dollar amounts.
+      - Reflect constraints clearly (limited funding, staffing, infrastructure).
+      - Keep the document practical and transparent, not hand-wavy.
+
+      Generate the complete Initial Budget & Resource Outline now.
+
+  communication_engagement:
+    key: communication_engagement
+    title: "Communication & Engagement Plan"
+    prompt: |-
+      You are generating the "Communication & Engagement Plan" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Define how the project will communicate with and engage stakeholders and communities.
+      - Identify audiences, messages, channels, and cadence.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Respect Tribal and community context when describing communication and engagement.
+      - Do not invent specific platforms, media outlets, or tools unless they are generic categories (e.g., "email updates", "community meetings").
+      - Align key messages with the Project Brief and Business Case.
+      - Be realistic about what can be executed with available staff and time.
+
+      Generate the complete Communication & Engagement Plan now.
+
+  data_technical_overview:
+    key: data_technical_overview
+    title: "Data / Technical / Systems Overview"
+    prompt: |-
+      You are generating the "Data / Technical / Systems Overview" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Provide a high-level view of systems, data flows, and technical components relevant to the project.
+      - This is NOT a deep technical spec; it is an overview for mixed technical/non-technical audiences.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Use generic descriptions of systems and integrations unless specific technologies are already provided in the context.
+      - Do not invent named products, vendors, or technical standards.
+      - Focus on how data moves, who needs access, and what reliability/security considerations matter.
+      - Ensure this document does not contradict scope, budget, or timeline.
+
+      Generate the complete Data / Technical / Systems Overview now.
+
+  operating_model_raci:
+    key: operating_model_raci
+    title: "Operating Model / RACI"
+    prompt: |-
+      You are generating the "Operating Model / RACI" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Explain how the project will operate day-to-day.
+      - Clarify roles, responsibilities, and decision rights (RACI-style if appropriate).
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Use roles and stakeholders already identified in PLANNING_DATA and previous documents.
+      - If using a RACI table, keep it simple and readable in Markdown.
+      - Do not invent new organizational units or titles that conflict with prior documents.
+      - Ensure that the governance structure is aligned with the Stakeholder & Governance Overview.
+
+      Generate the complete Operating Model / RACI document now.
+
+  change_management:
+    key: change_management
+    title: "Change Management / Adoption Plan"
+    prompt: |-
+      You are generating the "Change Management / Adoption Plan" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Describe how people, teams, or communities will adapt to new processes, systems, or services introduced by this project.
+      - Focus on readiness, training, communication, and ongoing support.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Align with the Communication & Engagement Plan, but focus more on behavior and process change.
+      - Be realistic about what support and training can be offered given constraints.
+      - Address resistance, confusion, and trust explicitly where relevant.
+      - Do not prescribe expensive tooling or large training programs unless clearly supported in the context.
+
+      Generate the complete Change Management / Adoption Plan now.
+
+  regulatory_compliance:
+    key: regulatory_compliance
+    title: "Regulatory & Compliance Summary"
+    prompt: |-
+      You are generating the "Regulatory & Compliance Summary" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Summarize key regulatory, legal, and compliance considerations that impact the project.
+      - Provide a high-level view for project leaders and legal/compliance advisors.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Do NOT invent the names of specific laws, regulations, or standards.
+      - If the context mentions specific frameworks, you may reference them; otherwise, speak in general terms (e.g., "health privacy requirements", "data protection obligations").
+      - Focus on obligations, constraints, and design implications, not legal advice.
+      - Respect Tribal jurisdiction and sovereignty as described in the context.
+
+      Generate the complete Regulatory & Compliance Summary now.
+
+  data_governance_privacy:
+    key: data_governance_privacy
+    title: "Data Governance & Privacy Framework"
+    prompt: |-
+      You are generating the "Data Governance & Privacy Framework" document for this project.
+
+      Context:
+      {{PROJECT_FRAME}}
+      {{CONCEPT_MAP}}
+      {{PLANNING_DATA}}
+      {{PREVIOUS_DOCS_SUMMARY}}
+
+      Document-specific purpose:
+      - Describe how data will be managed, protected, and accessed.
+      - Outline roles, responsibilities, and principles for data governance and privacy.
+
+      Outline to follow:
+      {{DOC_OUTLINE}}
+
+      Instructions:
+      - Focus on principles and processes: access control, data minimization, consent, stewardship, retention, and oversight.
+      - Do NOT invent named encryption products, proprietary platforms, or legal instruments.
+      - Align with any regulatory/compliance context already established.
+      - Respect data sovereignty and local control, especially for Tribal projects.
+
+      Generate the complete Data Governance & Privacy Framework document now.

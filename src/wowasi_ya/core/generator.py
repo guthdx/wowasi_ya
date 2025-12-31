@@ -41,6 +41,8 @@ WRITING_STYLE_RULES = """
 - Start with specific facts or direct statements instead.
 """
 
+import re
+
 from wowasi_ya.models.agent import AgentResult
 from wowasi_ya.models.document import (
     DOCUMENT_BATCHES,
@@ -50,6 +52,55 @@ from wowasi_ya.models.document import (
     GeneratedProject,
 )
 from wowasi_ya.models.project import ProjectInput
+
+
+def _is_content_truncated(content: str) -> tuple[bool, str]:
+    """Check if generated content appears truncated.
+
+    Returns:
+        Tuple of (is_truncated, reason).
+    """
+    if not content or not content.strip():
+        return True, "Content is empty"
+
+    content = content.strip()
+
+    # Check 1: Unbalanced code blocks
+    code_block_count = content.count("```")
+    if code_block_count % 2 != 0:
+        return True, "Unbalanced code blocks"
+
+    # Check 2: Ending mid-sentence
+    lines = [l.strip() for l in content.split("\n") if l.strip()]
+    if lines:
+        last_line = lines[-1]
+
+        # Skip check for special line types
+        skip_patterns = [
+            r"^#+\s",  # Heading
+            r"^\|.*\|$",  # Table row
+            r"^```",  # Code block marker
+            r"^---$",  # Horizontal rule
+            r"^[-*+]\s",  # List item
+            r"^\d+\.\s",  # Numbered list
+        ]
+        is_special = any(re.match(p, last_line) for p in skip_patterns)
+
+        if not is_special:
+            valid_endings = (".", "!", "?", ":", ")", "]", '"', "'", "`", "*", "_")
+            if not last_line.endswith(valid_endings):
+                return True, f"Ends mid-sentence: '{last_line[-40:]}'"
+
+    # Check 3: Incomplete markdown at end
+    incomplete_patterns = [
+        (r"\*\*[^*]+$", "Unclosed bold"),
+        (r"\[[^\]]*$", "Unclosed link"),
+    ]
+    for pattern, reason in incomplete_patterns:
+        if re.search(pattern, content[-200:]):
+            return True, reason
+
+    return False, ""
 
 
 # Document templates with folder mappings
@@ -168,14 +219,16 @@ class DocumentGenerator:
         project: ProjectInput,
         research_results: list[AgentResult],
         previous_docs: list[Document],
+        max_retries: int = 2,
     ) -> Document:
-        """Generate a single document.
+        """Generate a single document with truncation detection and retry.
 
         Args:
             doc_type: Type of document to generate.
             project: Project input.
             research_results: Results from research phase.
             previous_docs: Previously generated documents for context.
+            max_retries: Maximum retry attempts if truncation detected.
 
         Returns:
             Generated document.
@@ -187,35 +240,86 @@ class DocumentGenerator:
             doc_type, project, research_results, previous_docs
         )
 
-        try:
-            # Use abstracted LLM client (works with both Claude and Llama)
-            content = await client.generate(
-                prompt=prompt,
-                max_tokens=self.settings.max_generation_tokens,
-                temperature=0.7,
-            )
+        # Progressive token limits for retries
+        # NOTE: Keep max at 8192 to avoid Claude API streaming requirement
+        # (requests >10 min require streaming which we don't support yet)
+        base_tokens = min(self.settings.max_generation_tokens, 8192)
+        token_multipliers = [1.0, 1.0, 1.0]  # Don't escalate - stay at 8192 max
 
+        last_content = ""
+        last_error = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                # Calculate tokens for this attempt
+                current_max_tokens = int(base_tokens * token_multipliers[min(attempt, len(token_multipliers) - 1)])
+
+                # Use abstracted LLM client (works with both Claude and Llama)
+                content = await client.generate(
+                    prompt=prompt,
+                    max_tokens=current_max_tokens,
+                    temperature=0.7,
+                )
+
+                last_content = content
+
+                # Check for truncation
+                is_truncated, reason = _is_content_truncated(content)
+
+                if is_truncated:
+                    if attempt < max_retries:
+                        logger.warning(
+                            f"Document {doc_type.value} appears truncated ({reason}). "
+                            f"Retrying with higher token limit (attempt {attempt + 2}/{max_retries + 1})"
+                        )
+                        continue
+                    else:
+                        # Final attempt still truncated - log warning but proceed
+                        logger.warning(
+                            f"Document {doc_type.value} still truncated after {max_retries + 1} attempts: {reason}. "
+                            f"Proceeding with best result ({len(content.split())} words)"
+                        )
+
+                # Success or final attempt
+                return Document(
+                    type=doc_type,
+                    title=config["title"],
+                    content=content,
+                    folder=config["folder"],
+                    filename=config["filename"],
+                    generated_at=datetime.utcnow(),
+                    word_count=len(content.split()),
+                )
+
+            except Exception as e:
+                last_error = e
+                logger.error(f"Error generating {doc_type} (attempt {attempt + 1}): {e}")
+                if attempt < max_retries:
+                    continue
+                break
+
+        # All attempts failed - return error or best content
+        if last_content:
+            logger.warning(f"Returning partial content for {doc_type} after errors")
             return Document(
                 type=doc_type,
                 title=config["title"],
-                content=content,
+                content=last_content,
                 folder=config["folder"],
                 filename=config["filename"],
                 generated_at=datetime.utcnow(),
-                word_count=len(content.split()),
+                word_count=len(last_content.split()),
             )
 
-        except Exception as e:
-            logger.error(f"Error generating {doc_type}: {e}")
-            # Return error document
-            return Document(
-                type=doc_type,
-                title=config["title"],
-                content=f"# {config['title']}\n\n*Error generating document: {e!s}*",
-                folder=config["folder"],
-                filename=config["filename"],
-                word_count=0,
-            )
+        # Complete failure
+        return Document(
+            type=doc_type,
+            title=config["title"],
+            content=f"# {config['title']}\n\n*Error generating document: {last_error!s}*",
+            folder=config["folder"],
+            filename=config["filename"],
+            word_count=0,
+        )
 
     def _build_generation_prompt(
         self,

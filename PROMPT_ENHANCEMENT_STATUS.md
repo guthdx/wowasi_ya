@@ -1,7 +1,8 @@
 # Prompt Enhancement Project - Status Report
-**Date:** December 27, 2025
-**Status:** ✅ COMPLETE - All 15 Documents Enhanced
-**Next Session:** Production testing with Llama 3.3 70B
+**Date:** December 31, 2025
+**Status:** ✅ Phase 1 Complete - All 15 Documents Enhanced with Expert Personas
+**Current Work:** Quality checker improvements implemented, AI writing tell prevention planned
+**Next Session:** Test generation with quality improvements, then implement HUMAN_WRITING_STYLE
 
 ---
 
@@ -234,15 +235,53 @@ prompt_builders = {
 
 ---
 
+## Quality Checker Improvements (December 31, 2025)
+
+Added comprehensive quality validation to `src/wowasi_ya/core/quality.py`:
+
+### Truncation Detection
+- Detects incomplete documents (unbalanced code blocks, mid-sentence endings)
+- Automatic retry with same token limits (prevents wasteful escalation)
+- Reports truncation reason in quality output
+
+### Content Quality Checks
+- **Generic Filler Detection** - Flags phrases like "in today's", "plays a crucial role", "furthermore"
+- **AI Vocabulary Detection** - Catches words like "delve", "tapestry", "leverage", "seamlessly"
+- **Specificity Scoring** - Measures placeholder usage vs concrete details
+- **Sentence Variety Analysis** - Checks for natural length variation (burstiness)
+
+### Quality Grading
+- A-F grades based on aggregate score
+- Separate error/warning/info counts
+- Per-document breakdown with word counts
+
+### Generator Changes
+- Added `_is_content_truncated()` function
+- Retry logic for truncated documents (max 3 attempts)
+- Token limits capped at 8192 to avoid Claude streaming requirement
+
+---
+
 ## Next Steps
 
 ### Immediate (Testing Phase)
 
-1. [ ] Verify Mac/Llama server is online: `curl https://llama.iyeska.net/health`
-2. [ ] Set `.env` to `GENERATION_PROVIDER=llamacpp` for production
-3. [ ] Run full test generation with all 15 enhanced prompts
-4. [ ] Compare output quality across all document types
-5. [ ] Measure token usage and generation time
+1. [ ] Run test generation with quality improvements
+2. [ ] Review quality report output
+3. [ ] Implement HUMAN_WRITING_STYLE constant (see plan file)
+4. [ ] Inject style guide into all 15 prompt builders
+5. [ ] Re-test and verify quality score > 70%
+
+### Phase 2: Eliminate AI Writing Tells (Planned)
+
+Add `HUMAN_WRITING_STYLE` constant to generator.py with:
+- Banned AI vocabulary (delve, leverage, seamlessly, etc.)
+- Em dash usage limits
+- Sentence variety requirements
+- Formulaic transition bans
+- Good/bad style examples
+
+See plan file: `~/.claude/plans/compiled-sleeping-quail.md`
 
 ### Future Enhancements
 

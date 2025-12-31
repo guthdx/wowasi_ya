@@ -221,13 +221,15 @@ async def _generate_async(
 
         progress.update(task, completed=True)
 
-    if issues:
-        console.print(f"\n[yellow]Quality Score: {score:.0%}[/]")
-        errors = [i for i in issues if i.severity.value == "error"]
-        warnings = [i for i in issues if i.severity.value == "warning"]
-        console.print(f"  • {len(errors)} errors, {len(warnings)} warnings")
-    else:
-        console.print(f"\n[green]Quality Score: {score:.0%}[/] - No issues found!")
+    # Generate and display full quality report
+    quality_report = checker.generate_quality_report(generated_project)
+    console.print()
+    console.print(Panel(quality_report, title="Quality Assessment", border_style="blue"))
+
+    # Warn if quality is poor
+    if score < 0.6:
+        console.print("\n[bold red]⚠ Quality below acceptable threshold![/]")
+        console.print("[yellow]Consider regenerating or manually reviewing the documents.[/]")
 
     # Phase 4: Output
     with Progress(
