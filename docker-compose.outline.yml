@@ -72,17 +72,18 @@ services:
       # Authentication - Google OAuth (easiest option)
       # Get credentials at: https://console.cloud.google.com/apis/credentials
       # Authorized redirect URI: https://docs.iyeska.net/auth/google.callback
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      # - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # - GOOGLE_ALLOWED_DOMAINS=${GOOGLE_ALLOWED_DOMAINS}
 
       # Optional: Generic OIDC (for Zitadel/Keycloak/Authentik)
       # Uncomment and configure if using your NetBird Zitadel instance
-      # - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
-      # - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET}
-      # - OIDC_AUTH_URI=${OIDC_AUTH_URI}
-      # - OIDC_TOKEN_URI=${OIDC_TOKEN_URI}
-      # - OIDC_USERINFO_URI=${OIDC_USERINFO_URI}
-      # - OIDC_DISPLAY_NAME=Iyeska SSO
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET}
+      - OIDC_AUTH_URI=${OIDC_AUTH_URI}
+      - OIDC_TOKEN_URI=${OIDC_TOKEN_URI}
+      - OIDC_USERINFO_URI=${OIDC_USERINFO_URI}
+      - OIDC_DISPLAY_NAME=Iyeska SSO
 
       # Features
       - FORCE_HTTPS=${OUTLINE_FORCE_HTTPS:-false}
@@ -161,8 +162,8 @@ services:
     volumes:
       - outline_minio_data:/data
     ports:
-      - "9002:9000"   # API
-      - "9003:9001"   # Console
+      - "9004:9000"   # API
+      - "9005:9001"   # Console
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
