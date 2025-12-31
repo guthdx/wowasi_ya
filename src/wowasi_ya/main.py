@@ -43,10 +43,18 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.is_development else None,
     )
 
-    # CORS middleware
+    # CORS middleware - allow portal and API domains
+    allowed_origins = (
+        ["*"]
+        if settings.is_development
+        else [
+            "https://portal.iyeska.net",
+            "https://wowasi.iyeska.net",
+        ]
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"] if settings.is_development else [],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
