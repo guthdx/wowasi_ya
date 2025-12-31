@@ -38,8 +38,8 @@ export function Document() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading document...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate mx-auto"></div>
+          <p className="mt-4 text-slate dark:text-slate-light">Loading document...</p>
         </div>
       </div>
     );
@@ -48,26 +48,26 @@ export function Document() {
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 dark:text-gray-400">
-        <Link to="/" className="hover:text-gray-700 dark:hover:text-gray-200">
+      <nav className="text-sm text-slate dark:text-slate-light">
+        <Link to="/" className="hover:text-charcoal dark:hover:text-white transition-colors">
           Dashboard
         </Link>
         <span className="mx-2">/</span>
         <Link
           to={`/projects/${projectId}`}
-          className="hover:text-gray-700 dark:hover:text-gray-200"
+          className="hover:text-charcoal dark:hover:text-white transition-colors"
         >
           Project
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-gray-900 dark:text-white">{title}</span>
+        <span className="text-charcoal dark:text-white">{title}</span>
       </nav>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-charcoal dark:text-white">{title}</h1>
+          <p className="text-slate dark:text-slate-light mt-1">
             {completedSteps} of {totalSteps} steps complete
           </p>
         </div>
@@ -75,7 +75,7 @@ export function Document() {
           href={`${OUTLINE_BASE_URL}/doc/${documentType}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-slate text-white rounded-lg hover:bg-slate-dark transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
@@ -90,12 +90,12 @@ export function Document() {
       </div>
 
       {/* Progress */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-white dark:bg-charcoal-light rounded-xl border border-slate/20 dark:border-slate/30 p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-charcoal dark:text-white">
             Document Progress
           </span>
-          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+          <span className="text-sm font-medium text-slate dark:text-slate-light">
             {progressPercentage.toFixed(0)}%
           </span>
         </div>
@@ -105,18 +105,18 @@ export function Document() {
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Embedded Outline */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold text-gray-900 dark:text-white">Document Preview</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <div className="bg-white dark:bg-charcoal-light rounded-xl border border-slate/20 dark:border-slate/30 overflow-hidden">
+          <div className="p-4 border-b border-slate/10 dark:border-slate/20">
+            <h2 className="font-semibold text-charcoal dark:text-white">Document Preview</h2>
+            <p className="text-sm text-slate dark:text-slate-light mt-1">
               View in Outline for full editing capabilities
             </p>
           </div>
-          <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+          <div className="aspect-[4/3] bg-slate/5 dark:bg-charcoal flex items-center justify-center">
             {/* Placeholder for iframe embed - Outline needs public sharing enabled */}
             <div className="text-center p-8">
               <svg
-                className="w-16 h-16 mx-auto text-gray-400"
+                className="w-16 h-16 mx-auto text-slate/50"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -128,26 +128,26 @@ export function Document() {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">
+              <p className="mt-4 text-slate dark:text-slate-light">
                 Document preview will appear here once Outline public sharing is enabled
               </p>
               <a
                 href={`${OUTLINE_BASE_URL}/doc/${documentType}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block mt-4 text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                className="inline-block mt-4 text-slate hover:text-charcoal dark:text-slate-light dark:hover:text-white transition-colors"
               >
-                Open in Outline →
+                Open in Outline
               </a>
             </div>
           </div>
         </div>
 
         {/* Right: Next Steps */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold text-gray-900 dark:text-white">Next Steps</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <div className="bg-white dark:bg-charcoal-light rounded-xl border border-slate/20 dark:border-slate/30 overflow-hidden">
+          <div className="p-4 border-b border-slate/10 dark:border-slate/20">
+            <h2 className="font-semibold text-charcoal dark:text-white">Next Steps</h2>
+            <p className="text-sm text-slate dark:text-slate-light mt-1">
               Actions to take after reviewing this document
             </p>
           </div>
@@ -164,7 +164,7 @@ export function Document() {
             ))}
 
             {(!stepsData?.steps || stepsData.steps.length === 0) && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-8 text-slate dark:text-slate-light">
                 <p>No next steps defined for this document</p>
               </div>
             )}

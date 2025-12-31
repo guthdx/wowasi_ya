@@ -1,28 +1,125 @@
 @import "tailwindcss";
 
-/* Custom theme variables */
+/* Iyeska Brand Colors */
 @theme {
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-secondary: #64748b;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  /* Primary Brand Colors */
+  --color-terracotta: #C06C4D;
+  --color-terracotta-dark: #A85A3D;
+  --color-terracotta-light: #D4876A;
+  --color-slate: #56738C;
+  --color-slate-dark: #445D73;
+  --color-slate-light: #7B96AE;
+  --color-charcoal: #333333;
+  --color-charcoal-light: #4A4A4A;
+  --color-offwhite: #F8F8F8;
 
-  /* Iyeska brand colors */
-  --color-iyeska-blue: #1e40af;
-  --color-iyeska-gold: #d97706;
+  /* Semantic Colors using brand palette */
+  --color-primary: #56738C;
+  --color-primary-dark: #445D73;
+  --color-secondary: #C06C4D;
+  --color-success: #4A8C6A;
+  --color-warning: #D4A74D;
+  --color-danger: #C06C4D;
+
+  /* Legacy support */
+  --color-iyeska-blue: #56738C;
+  --color-iyeska-gold: #C06C4D;
 }
 
 /* Base styles */
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  @apply bg-offwhite text-charcoal antialiased;
+  font-family: 'Open Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   body {
-    @apply bg-gray-900 text-gray-100;
+    @apply bg-charcoal text-gray-100;
   }
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #56738C;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #445D73;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #333333;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #56738C;
+  }
+}
+
+/* Iyeska Logo Text Style */
+.logo-text {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* Status indicator pulse animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(86, 115, 140, 0.4);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 8px rgba(86, 115, 140, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Quirky status message animation */
+@keyframes fade-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.animate-status-message {
+  animation: fade-slide 3s ease-in-out;
+}
+
+/* Provider toggle switch styling */
+.toggle-switch {
+  @apply relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300;
+}
+
+.toggle-switch-knob {
+  @apply inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-300;
 }

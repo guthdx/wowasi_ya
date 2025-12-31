@@ -19,22 +19,22 @@ export function ProgressBar({
 
   const getColor = (pct: number) => {
     if (pct >= 100) return 'bg-green-500';
-    if (pct >= 75) return 'bg-blue-500';
-    if (pct >= 50) return 'bg-yellow-500';
-    if (pct >= 25) return 'bg-orange-500';
-    return 'bg-gray-400';
+    if (pct >= 75) return 'bg-slate';
+    if (pct >= 50) return 'bg-slate-light';
+    if (pct >= 25) return 'bg-terracotta-light';
+    return 'bg-slate/50';
   };
 
   return (
     <div className={`w-full ${className}`}>
-      <div className={`w-full bg-gray-200 rounded-full ${heights[size]} dark:bg-gray-700`}>
+      <div className={`w-full bg-slate/20 rounded-full ${heights[size]} dark:bg-slate/30`}>
         <div
           className={`${heights[size]} rounded-full transition-all duration-300 ${getColor(percentage)}`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />
       </div>
       {showLabel && (
-        <span className="text-sm text-gray-600 dark:text-gray-400 mt-1 block">
+        <span className="text-sm text-slate dark:text-slate-light mt-1 block">
           {percentage.toFixed(0)}% complete
         </span>
       )}

@@ -72,8 +72,8 @@ export function Project() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading project...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate mx-auto"></div>
+          <p className="mt-4 text-slate dark:text-slate-light">Loading project...</p>
         </div>
       </div>
     );
@@ -82,42 +82,42 @@ export function Project() {
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 dark:text-gray-400">
-        <Link to="/" className="hover:text-gray-700 dark:hover:text-gray-200">
+      <nav className="text-sm text-slate dark:text-slate-light">
+        <Link to="/" className="hover:text-charcoal dark:hover:text-white transition-colors">
           Dashboard
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-gray-900 dark:text-white">Project</span>
+        <span className="text-charcoal dark:text-white">Project</span>
       </nav>
 
       {/* Overall Progress */}
       {progress && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-charcoal-light rounded-xl border border-slate/20 dark:border-slate/30 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-charcoal dark:text-white">
               Overall Progress
             </h2>
-            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <span className="text-2xl font-bold text-slate dark:text-slate-light">
               {progress.completion_percentage}%
             </span>
           </div>
           <ProgressBar percentage={progress.completion_percentage} size="lg" showLabel={false} />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Steps</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">{progress.total_steps}</p>
+              <p className="text-sm text-slate dark:text-slate-light">Total Steps</p>
+              <p className="text-xl font-semibold text-charcoal dark:text-white">{progress.total_steps}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+              <p className="text-sm text-slate dark:text-slate-light">Completed</p>
               <p className="text-xl font-semibold text-green-600 dark:text-green-400">{progress.completed_steps}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
-              <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">{progress.in_progress_steps}</p>
+              <p className="text-sm text-slate dark:text-slate-light">In Progress</p>
+              <p className="text-xl font-semibold text-slate dark:text-slate-light">{progress.in_progress_steps}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Not Started</p>
-              <p className="text-xl font-semibold text-gray-600 dark:text-gray-400">{progress.not_started_steps}</p>
+              <p className="text-sm text-slate dark:text-slate-light">Not Started</p>
+              <p className="text-xl font-semibold text-charcoal-light dark:text-gray-400">{progress.not_started_steps}</p>
             </div>
           </div>
         </div>
@@ -132,24 +132,24 @@ export function Project() {
           return (
             <div
               key={phase}
-              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+              className="bg-white dark:bg-charcoal-light rounded-xl border border-slate/20 dark:border-slate/30 overflow-hidden"
             >
               {/* Phase Header */}
               <button
                 onClick={() => togglePhase(phase)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-slate/5 dark:hover:bg-slate/10 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <svg
-                    className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`w-5 h-5 text-slate transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <span className="font-medium text-gray-900 dark:text-white">{phase}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="font-medium text-charcoal dark:text-white">{phase}</span>
+                  <span className="text-sm text-slate dark:text-slate-light">
                     ({docTypes.length} documents)
                   </span>
                 </div>
@@ -157,7 +157,7 @@ export function Project() {
                   <div className="w-32">
                     <ProgressBar percentage={phaseProgress} size="sm" showLabel={false} />
                   </div>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <span className="text-sm font-medium text-slate dark:text-slate-light">
                     {phaseProgress.toFixed(0)}%
                   </span>
                 </div>
@@ -165,20 +165,20 @@ export function Project() {
 
               {/* Phase Content */}
               {isExpanded && (
-                <div className="border-t border-gray-200 dark:border-gray-700">
+                <div className="border-t border-slate/10 dark:border-slate/20">
                   {docTypes.map((docType) => {
                     const docProgress = getDocTypeProgress(docType as DocumentType);
                     const docSteps = stepsByDocType[docType] || [];
 
                     return (
-                      <div key={docType} className="border-b last:border-b-0 border-gray-100 dark:border-gray-700/50">
+                      <div key={docType} className="border-b last:border-b-0 border-slate/10 dark:border-slate/20">
                         {/* Document Header */}
-                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50">
+                        <div className="flex items-center justify-between p-4 bg-slate/5 dark:bg-slate/10">
                           <div className="flex items-center gap-3">
-                            <span className="font-medium text-gray-800 dark:text-gray-200">
+                            <span className="font-medium text-charcoal dark:text-white">
                               {DOCUMENT_TITLES[docType as DocumentType]}
                             </span>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                            <span className="text-sm text-slate dark:text-slate-light">
                               {docSteps.length} steps
                             </span>
                           </div>
@@ -188,9 +188,9 @@ export function Project() {
                             </div>
                             <Link
                               to={`/projects/${projectId}/documents/${docType}`}
-                              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                              className="text-sm text-slate hover:text-charcoal dark:text-slate-light dark:hover:text-white transition-colors"
                             >
-                              View →
+                              View
                             </Link>
                           </div>
                         </div>
