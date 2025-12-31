@@ -229,13 +229,60 @@ class LlamaCPPClient:
         await self.client.aclose()
 
 
+class FallbackClient:
+    """Claude client with automatic Llama fallback on errors.
+
+    Primary: Claude API
+    Fallback: Llama CPP (M4 Mac) when Claude has rate limits or errors
+    """
+
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
+        self.claude_client = ClaudeClient(settings)
+        self._llama_client: LlamaCPPClient | None = None
+        self._llama_available: bool | None = None
+
+    async def _get_llama_client(self) -> LlamaCPPClient | None:
+        """Get Llama client, checking availability once."""
+        if self._llama_client is None:
+            self._llama_client = LlamaCPPClient(self.settings)
+            self._llama_available = await self._llama_client.health_check()
+        return self._llama_client if self._llama_available else None
+
+    async def generate(
+        self,
+        prompt: str,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+    ) -> str:
+        """Generate with Claude, fallback to Llama on errors."""
+        try:
+            return await self.claude_client.generate(prompt, max_tokens, temperature)
+        except Exception as e:
+            logger.warning(f"Claude API error: {e}")
+
+            if self.settings.claude_fallback_to_llamacpp:
+                llama = await self._get_llama_client()
+                if llama:
+                    logger.info("Falling back to Llama CPP (M4 Mac)")
+                    return await llama.generate(prompt, max_tokens, temperature)
+                else:
+                    logger.warning("Llama fallback unavailable, re-raising Claude error")
+
+            raise
+
+    def supports_web_search(self) -> bool:
+        return True
+
+    async def health_check(self) -> bool:
+        return True
+
+
 async def get_generation_client(settings: Settings) -> BaseLLMClient:
     """Factory for generation clients with intelligent fallback.
 
-    Returns Claude or Llama based on:
-    1. User configuration (GENERATION_PROVIDER)
-    2. Mac availability (health check)
-    3. Fallback settings (LLAMACPP_FALLBACK_TO_CLAUDE)
+    Default (claude): Claude API with fallback to Llama when errors occur
+    Alternative (llamacpp): Llama CPP with fallback to Claude when Mac offline
 
     Args:
         settings: Application settings.
@@ -244,7 +291,7 @@ async def get_generation_client(settings: Settings) -> BaseLLMClient:
         LLM client instance.
     """
     if settings.generation_provider == "llamacpp":
-        # Try Llama first
+        # Llama primary, Claude fallback
         llama_client = LlamaCPPClient(settings)
         is_available = await llama_client.health_check()
 
@@ -264,9 +311,13 @@ async def get_generation_client(settings: Settings) -> BaseLLMClient:
                     "or set LLAMACPP_FALLBACK_TO_CLAUDE=true"
                 )
 
-    # Default to Claude
-    logger.info("Using Claude API for document generation")
-    return ClaudeClient(settings)
+    # Default: Claude primary with Llama fallback
+    if settings.claude_fallback_to_llamacpp:
+        logger.info("Using Claude API for generation (Llama fallback enabled)")
+        return FallbackClient(settings)
+    else:
+        logger.info("Using Claude API for document generation")
+        return ClaudeClient(settings)
 
 
 def get_research_client(settings: Settings) -> BaseLLMClient:

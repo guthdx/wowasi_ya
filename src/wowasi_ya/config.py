@@ -62,14 +62,15 @@ class Settings(BaseSettings):
     max_concurrent_research_agents: int = Field(default=1, ge=1, le=10)  # Rate limit protection
 
     # LLM Provider Configuration
-    generation_provider: Literal["claude", "llamacpp"] = "llamacpp"
+    generation_provider: Literal["claude", "llamacpp"] = "claude"  # Default to Claude API
     research_provider: Literal["claude"] = "claude"  # Fixed for now (web search)
 
     # Llama CPP Settings (via Cloudflare Tunnel)
     llamacpp_base_url: str = "https://llama.iyeska.net"
     llamacpp_model: str = "Llama-3.3-70B-Instruct-Q4_K_M"
     llamacpp_timeout: int = 300  # 5 minutes for large documents
-    llamacpp_fallback_to_claude: bool = True  # Fallback when Mac offline
+    llamacpp_fallback_to_claude: bool = True  # Fallback when Mac offline (if llamacpp primary)
+    claude_fallback_to_llamacpp: bool = True  # Fallback to Mac when Claude has issues
 
     # Outline Wiki Integration
     outline_api_url: str = "https://docs.iyeska.net"
