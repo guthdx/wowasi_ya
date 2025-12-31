@@ -1,0 +1,109 @@
+import axios from 'axios';
+import type { NextStep, Project, ProjectProgress } from '../types';
+
+// API base URL - configurable via environment variable
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wowasi.iyeska.net/api/v1';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Projects API
+export const projectsApi = {
+  list: async (): Promise<Project[]> => {
+    const { data } = await api.get('/projects');
+    return data;
+  },
+
+  get: async (id: string): Promise<Project> => {
+    const { data } = await api.get(`/projects/${id}`);
+    return data;
+  },
+
+  getStatus: async (id: string) => {
+    const { data } = await api.get(`/projects/${id}/status`);
+    return data;
+  },
+
+  getResult: async (id: string) => {
+    const { data } = await api.get(`/projects/${id}/result`);
+    return data;
+  },
+};
+
+// Next Steps API
+export const nextStepsApi = {
+  create: async (projectId: string, documentTypes?: string[]) => {
+    const { data } = await api.post(`/projects/${projectId}/next-steps`, {
+      document_types: documentTypes,
+    });
+    return data;
+  },
+
+  list: async (projectId: string, documentType?: string): Promise<{ steps: NextStep[]; total: number }> => {
+    const params = documentType ? { document_type: documentType } : {};
+    const { data } = await api.get(`/projects/${projectId}/next-steps`, { params });
+    return data;
+  },
+
+  get: async (projectId: string, stepId: string): Promise<NextStep> => {
+    const { data } = await api.get(`/projects/${projectId}/next-steps/${stepId}`);
+    return data;
+  },
+
+  update: async (
+    projectId: string,
+    stepId: string,
+    updates: { status?: string; notes?: string; output_data?: Record<string, unknown> }
+  ): Promise<NextStep> => {
+    const { data } = await api.patch(`/projects/${projectId}/next-steps/${stepId}`, updates);
+    return data;
+  },
+
+  complete: async (
+    projectId: string,
+    stepId: string,
+    completedBy?: string,
+    outputData?: Record<string, unknown>
+  ): Promise<NextStep> => {
+    const { data } = await api.post(`/projects/${projectId}/next-steps/${stepId}/complete`, {
+      completed_by: completedBy,
+      output_data: outputData,
+    });
+    return data;
+  },
+
+  skip: async (projectId: string, stepId: string, reason?: string): Promise<NextStep> => {
+    const { data } = await api.post(`/projects/${projectId}/next-steps/${stepId}/skip`, {
+      reason,
+    });
+    return data;
+  },
+
+  getProgress: async (projectId: string): Promise<ProjectProgress> => {
+    const { data } = await api.get(`/projects/${projectId}/progress`);
+    return data;
+  },
+};
+
+// Health check
+export const healthApi = {
+  check: async () => {
+    const { data } = await api.get('/health');
+    return data;
+  },
+};
+
+export default api;

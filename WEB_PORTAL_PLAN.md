@@ -321,15 +321,47 @@ This is what makes us different. Each document type has predefined actions.
 
 **Goal:** Simple React UI for next steps
 
-- [ ] Scaffold React + Vite app in `portal/` directory
-- [ ] Build Dashboard page (list projects with progress bars)
-- [ ] Build Project page (phase-based view of documents)
-- [ ] Build Document page (embedded Outline + next steps panel)
-- [ ] Implement checklist and form interactions
-- [ ] Add Dockerfile and Traefik labels
+- [x] Scaffold React + Vite app in `portal/` directory
+- [x] Build Dashboard page (list projects with progress bars)
+- [x] Build Project page (phase-based view of documents)
+- [x] Build Document page (embedded Outline + next steps panel)
+- [x] Implement checklist and form interactions
+- [x] Add Dockerfile and Traefik labels
 - [ ] Deploy to portal.iyeska.net
 
 **Deliverable:** Clients can view projects, see next steps, mark items complete
+
+**Completed (Development):** 2025-12-30
+
+**Portal Structure:**
+```
+portal/
+├── src/
+│   ├── api/client.ts          # Axios API client
+│   ├── components/
+│   │   ├── Layout.tsx         # App layout with nav
+│   │   ├── ProgressBar.tsx    # Progress visualization
+│   │   └── StepCard.tsx       # Next step card with actions
+│   ├── hooks/
+│   │   ├── useProjects.ts     # React Query hooks for projects
+│   │   └── useNextSteps.ts    # React Query hooks for next steps
+│   ├── pages/
+│   │   ├── Dashboard.tsx      # Project list with stats
+│   │   ├── Project.tsx        # Phase-based document view
+│   │   └── Document.tsx       # Outline embed + steps panel
+│   ├── types/index.ts         # TypeScript types
+│   └── App.tsx                # Router setup
+├── Dockerfile                 # Multi-stage build (node → nginx)
+├── nginx.conf                 # SPA routing config
+└── docker-compose.portal.yml  # Traefik-ready deployment
+```
+
+**Tech Stack:**
+- React 19 + TypeScript
+- Vite 7 with Tailwind CSS v4
+- React Router v7
+- TanStack Query (React Query) v5
+- Axios for API calls
 
 ---
 
