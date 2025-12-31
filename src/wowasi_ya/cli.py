@@ -56,6 +56,14 @@ def generate(
         bool,
         typer.Option("--skip-privacy", help="Skip privacy review (not recommended)"),
     ] = False,
+    publish_to_outline: Annotated[
+        bool,
+        typer.Option("--publish-to-outline", help="Publish to Outline Wiki after generation"),
+    ] = False,
+    share_outline: Annotated[
+        bool,
+        typer.Option("--share-outline", help="Enable public sharing link (requires --publish-to-outline)"),
+    ] = False,
 ) -> None:
     """Generate project documentation from a description.
 
@@ -66,6 +74,7 @@ def generate(
     4. Document Generation (API calls)
     5. Quality Check (local)
     6. Output
+    7. Publish to Outline (optional, with --publish-to-outline)
     """
     asyncio.run(
         _generate_async(
@@ -75,6 +84,8 @@ def generate(
             output_format=output_format,
             output_dir=output_dir,
             skip_privacy=skip_privacy,
+            publish_to_outline=publish_to_outline,
+            share_outline=share_outline,
         )
     )
 
@@ -86,6 +97,8 @@ async def _generate_async(
     output_format: str,
     output_dir: Path | None,
     skip_privacy: bool,
+    publish_to_outline: bool = False,
+    share_outline: bool = False,
 ) -> None:
     """Async implementation of generate command."""
     settings = get_settings()
@@ -246,6 +259,159 @@ async def _generate_async(
         console.print(f"  • {path}")
     if len(paths) > 5:
         console.print(f"  • ... and {len(paths) - 5} more files")
+
+    # Phase 5: Publish to Outline (optional)
+    if publish_to_outline:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Phase 5: Publishing to Outline...", total=None)
+
+            try:
+                from wowasi_ya.core.outline import OutlinePublisher
+
+                publisher = OutlinePublisher(settings=settings)
+                result = await publisher.publish(generated_project, enable_sharing=share_outline)
+
+                progress.update(task, completed=True)
+                console.print(f"\n[bold green]✓ Published to Outline![/]")
+                console.print(f"  Collection: {result.collection.url}")
+                console.print(f"  Documents: {len(result.documents)}")
+                if result.public_url:
+                    console.print(f"  Public URL: {result.public_url}")
+
+            except ValueError as e:
+                progress.update(task, completed=True)
+                console.print(f"\n[red]✗ Outline publish failed:[/] {e}")
+                console.print("  Hint: Set OUTLINE_API_KEY in .env")
+            except Exception as e:
+                progress.update(task, completed=True)
+                console.print(f"\n[red]✗ Outline publish failed:[/] {e}")
+
+
+@app.command()
+def publish(
+    project_name: Annotated[str, typer.Argument(help="Project name (folder name in output/)")],
+    output_dir: Annotated[
+        Optional[Path],
+        typer.Option("--output", "-o", help="Output directory containing the project"),
+    ] = None,
+    share: Annotated[
+        bool,
+        typer.Option("--share", "-s", help="Enable public sharing link"),
+    ] = False,
+) -> None:
+    """Publish an existing project to Outline Wiki.
+
+    Reads documents from output/{project_name}/ and publishes to Outline.
+    Use this for projects that were generated but not published.
+    """
+    asyncio.run(_publish_async(project_name, output_dir, share))
+
+
+async def _publish_async(
+    project_name: str,
+    output_dir: Path | None,
+    share: bool,
+) -> None:
+    """Async implementation of publish command."""
+    from wowasi_ya.core.outline import OutlinePublisher
+    from wowasi_ya.models.document import Document, DocumentType, GeneratedProject
+
+    settings = get_settings()
+    base_dir = (output_dir or settings.output_dir) / project_name
+
+    if not base_dir.exists():
+        console.print(f"[red]Error:[/] Project not found: {base_dir}")
+        console.print(f"\nAvailable projects:")
+        output_root = output_dir or settings.output_dir
+        if output_root.exists():
+            for p in output_root.iterdir():
+                if p.is_dir() and not p.name.startswith("."):
+                    console.print(f"  • {p.name}")
+        raise typer.Exit(1)
+
+    # Map file paths to document types
+    DOC_MAP = {
+        "00-Overview/Project-Brief.md": (DocumentType.PROJECT_BRIEF, "00-Overview", "Project-Brief.md"),
+        "00-Overview/README.md": (DocumentType.README, "00-Overview", "README.md"),
+        "00-Overview/Glossary.md": (DocumentType.GLOSSARY, "00-Overview", "Glossary.md"),
+        "10-Discovery/Context-and-Background.md": (DocumentType.CONTEXT_BACKGROUND, "10-Discovery", "Context-and-Background.md"),
+        "10-Discovery/Stakeholder-Notes.md": (DocumentType.STAKEHOLDER_NOTES, "10-Discovery", "Stakeholder-Notes.md"),
+        "20-Planning/Goals-and-Success-Criteria.md": (DocumentType.GOALS_SUCCESS, "20-Planning", "Goals-and-Success-Criteria.md"),
+        "20-Planning/Initial-Budget.md": (DocumentType.INITIAL_BUDGET, "20-Planning", "Initial-Budget.md"),
+        "20-Planning/Risks-and-Assumptions.md": (DocumentType.RISKS_ASSUMPTIONS, "20-Planning", "Risks-and-Assumptions.md"),
+        "20-Planning/Scope-and-Boundaries.md": (DocumentType.SCOPE_BOUNDARIES, "20-Planning", "Scope-and-Boundaries.md"),
+        "20-Planning/Timeline-and-Milestones.md": (DocumentType.TIMELINE_MILESTONES, "20-Planning", "Timeline-and-Milestones.md"),
+        "30-Execution/Process-Workflow.md": (DocumentType.PROCESS_WORKFLOW, "30-Execution", "Process-Workflow.md"),
+        "30-Execution/SOPs.md": (DocumentType.SOPS, "30-Execution", "SOPs.md"),
+        "30-Execution/Task-Backlog.md": (DocumentType.TASK_BACKLOG, "30-Execution", "Task-Backlog.md"),
+        "40-Comms/Meeting-Notes.md": (DocumentType.MEETING_NOTES, "40-Comms", "Meeting-Notes.md"),
+        "40-Comms/Status-Updates.md": (DocumentType.STATUS_UPDATES, "40-Comms", "Status-Updates.md"),
+    }
+
+    console.print(Panel(f"[bold blue]Publishing to Outline:[/] {project_name}"))
+
+    documents = []
+    for file_path, (doc_type, folder, filename) in DOC_MAP.items():
+        full_path = base_dir / file_path
+        if full_path.exists():
+            content = full_path.read_text()
+            lines = content.strip().split('\n')
+            title = lines[0].lstrip('# ').strip() if lines else filename.replace('.md', '')
+
+            documents.append(Document(
+                type=doc_type,
+                title=title,
+                content=content,
+                folder=folder,
+                filename=filename,
+                word_count=len(content.split()),
+            ))
+
+    if not documents:
+        console.print(f"[red]Error:[/] No documents found in {base_dir}")
+        raise typer.Exit(1)
+
+    console.print(f"Found {len(documents)} documents")
+
+    project = GeneratedProject(
+        project_name=project_name,
+        project_area="04_Iyeska",
+        documents=documents,
+        total_word_count=sum(d.word_count for d in documents),
+    )
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Publishing to Outline...", total=None)
+
+        try:
+            publisher = OutlinePublisher(settings=settings)
+            result = await publisher.publish(project, enable_sharing=share)
+
+            progress.update(task, completed=True)
+
+        except ValueError as e:
+            progress.update(task, completed=True)
+            console.print(f"\n[red]✗ Publish failed:[/] {e}")
+            console.print("  Hint: Set OUTLINE_API_KEY in .env")
+            raise typer.Exit(1)
+        except Exception as e:
+            progress.update(task, completed=True)
+            console.print(f"\n[red]✗ Publish failed:[/] {e}")
+            raise typer.Exit(1)
+
+    console.print(f"\n[bold green]✓ Published to Outline![/]")
+    console.print(f"  Collection: {result.collection.url}")
+    console.print(f"  Documents: {len(result.documents)}")
+    if result.public_url:
+        console.print(f"  Public URL: {result.public_url}")
 
 
 @app.command()
