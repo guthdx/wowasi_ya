@@ -16,9 +16,15 @@ from wowasi_ya.core import (
     QualityChecker,
     ResearchEngine,
 )
+from wowasi_ya.core.next_steps import NextStepsEngine, get_next_steps_engine
 from wowasi_ya.core.privacy import PrivacyScanResult
 from wowasi_ya.models.agent import AgentDefinition, DomainMatch
-from wowasi_ya.models.document import GeneratedProject
+from wowasi_ya.models.document import DocumentType, GeneratedProject
+from wowasi_ya.models.next_steps import (
+    ProjectNextStep,
+    ProjectProgress,
+    StepStatus,
+)
 from wowasi_ya.models.project import ProjectInput, ProjectState, ProjectStatus
 
 router = APIRouter()
@@ -473,3 +479,341 @@ async def run_generation_pipeline(
     except Exception as e:
         state.status = ProjectStatus.FAILED
         state.error = str(e)
+
+
+# ============================================================================
+# Next Steps API Endpoints (Phase 3)
+# ============================================================================
+
+
+class CreateNextStepsRequest(BaseModel):
+    """Request to create next steps for a project."""
+
+    document_types: list[str] | None = Field(
+        default=None,
+        description="Document types to create steps for. If None, creates for all 15 types.",
+    )
+
+
+class CreateNextStepsResponse(BaseModel):
+    """Response from creating next steps."""
+
+    project_id: str
+    steps_created: int
+    message: str
+
+
+class NextStepResponse(BaseModel):
+    """Single next step response."""
+
+    id: str
+    project_id: str
+    template_id: str
+    document_type: str
+    title: str
+    description: str
+    action_type: str
+    action_config: dict
+    is_required: bool
+    status: str
+    notes: str | None = None
+    output_data: dict | None = None
+    completed_at: str | None = None
+    completed_by: str | None = None
+
+
+class NextStepsListResponse(BaseModel):
+    """Response for list of next steps."""
+
+    project_id: str
+    steps: list[NextStepResponse]
+    total: int
+
+
+class UpdateStepRequest(BaseModel):
+    """Request to update a next step."""
+
+    status: str | None = Field(
+        default=None,
+        description="New status: not_started, in_progress, completed, skipped",
+    )
+    notes: str | None = Field(default=None, description="Notes for this step")
+    output_data: dict | None = Field(
+        default=None,
+        description="Form/checklist data for this step",
+    )
+
+
+class CompleteStepRequest(BaseModel):
+    """Request to mark a step as completed."""
+
+    completed_by: str | None = Field(
+        default=None,
+        description="Name or email of who completed the step",
+    )
+    output_data: dict | None = Field(
+        default=None,
+        description="Final form/checklist data",
+    )
+
+
+class SkipStepRequest(BaseModel):
+    """Request to skip a step."""
+
+    reason: str | None = Field(
+        default=None,
+        description="Reason for skipping this step",
+    )
+
+
+def _step_to_response(step: ProjectNextStep) -> NextStepResponse:
+    """Convert ProjectNextStep to API response model."""
+    return NextStepResponse(
+        id=step.id,
+        project_id=step.project_id,
+        template_id=step.template_id,
+        document_type=step.document_type.value,
+        title=step.title,
+        description=step.description,
+        action_type=step.action_type.value,
+        action_config=step.action_config,
+        is_required=step.is_required,
+        status=step.status.value,
+        notes=step.notes,
+        output_data=step.output_data,
+        completed_at=step.completed_at.isoformat() if step.completed_at else None,
+        completed_by=step.completed_by,
+    )
+
+
+@router.post(
+    "/projects/{project_id}/next-steps",
+    response_model=CreateNextStepsResponse,
+)
+async def create_next_steps(
+    project_id: str,
+    request: CreateNextStepsRequest,
+    user: RequireAuth,
+) -> CreateNextStepsResponse:
+    """Create next steps for a project.
+
+    This should be called after publishing to Outline to create
+    actionable next steps for each document.
+    """
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Convert string document types to enum if provided
+    doc_types: list[DocumentType] | None = None
+    if request.document_types:
+        try:
+            doc_types = [DocumentType(dt) for dt in request.document_types]
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid document type: {e}",
+            ) from e
+
+    engine = get_next_steps_engine()
+    steps = engine.create_steps_for_project(project_id, doc_types)
+
+    return CreateNextStepsResponse(
+        project_id=project_id,
+        steps_created=len(steps),
+        message=f"Created {len(steps)} next steps for project",
+    )
+
+
+@router.get(
+    "/projects/{project_id}/next-steps",
+    response_model=NextStepsListResponse,
+)
+async def get_next_steps(
+    project_id: str,
+    user: RequireAuth,
+    document_type: str | None = None,
+) -> NextStepsListResponse:
+    """Get all next steps for a project.
+
+    Optionally filter by document type.
+    """
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    engine = get_next_steps_engine()
+
+    # Convert document type filter if provided
+    doc_type_filter: DocumentType | None = None
+    if document_type:
+        try:
+            doc_type_filter = DocumentType(document_type)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid document type: {document_type}",
+            ) from e
+
+    steps = engine.get_steps(project_id, doc_type_filter)
+
+    return NextStepsListResponse(
+        project_id=project_id,
+        steps=[_step_to_response(s) for s in steps],
+        total=len(steps),
+    )
+
+
+@router.get(
+    "/projects/{project_id}/next-steps/{step_id}",
+    response_model=NextStepResponse,
+)
+async def get_next_step(
+    project_id: str,
+    step_id: str,
+    user: RequireAuth,
+) -> NextStepResponse:
+    """Get a specific next step by ID."""
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    engine = get_next_steps_engine()
+    step = engine.get_step(step_id)
+
+    if not step:
+        raise HTTPException(status_code=404, detail="Next step not found")
+
+    if step.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Next step not found in this project")
+
+    return _step_to_response(step)
+
+
+@router.patch(
+    "/projects/{project_id}/next-steps/{step_id}",
+    response_model=NextStepResponse,
+)
+async def update_next_step(
+    project_id: str,
+    step_id: str,
+    request: UpdateStepRequest,
+    user: RequireAuth,
+) -> NextStepResponse:
+    """Update a next step's status, notes, or output data."""
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    engine = get_next_steps_engine()
+
+    # Verify step exists and belongs to project
+    existing = engine.get_step(step_id)
+    if not existing or existing.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Next step not found in this project")
+
+    # Convert status string to enum if provided
+    status_enum: StepStatus | None = None
+    if request.status:
+        try:
+            status_enum = StepStatus(request.status)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status: {request.status}. Valid values: not_started, in_progress, completed, skipped",
+            ) from e
+
+    step = engine.update_step(
+        step_id,
+        status=status_enum,
+        notes=request.notes,
+        output_data=request.output_data,
+    )
+
+    if not step:
+        raise HTTPException(status_code=404, detail="Failed to update step")
+
+    return _step_to_response(step)
+
+
+@router.post(
+    "/projects/{project_id}/next-steps/{step_id}/complete",
+    response_model=NextStepResponse,
+)
+async def complete_next_step(
+    project_id: str,
+    step_id: str,
+    request: CompleteStepRequest,
+    user: RequireAuth,
+) -> NextStepResponse:
+    """Mark a next step as completed."""
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    engine = get_next_steps_engine()
+
+    # Verify step exists and belongs to project
+    existing = engine.get_step(step_id)
+    if not existing or existing.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Next step not found in this project")
+
+    step = engine.complete_step(
+        step_id,
+        completed_by=request.completed_by,
+        output_data=request.output_data,
+    )
+
+    if not step:
+        raise HTTPException(status_code=404, detail="Failed to complete step")
+
+    return _step_to_response(step)
+
+
+@router.post(
+    "/projects/{project_id}/next-steps/{step_id}/skip",
+    response_model=NextStepResponse,
+)
+async def skip_next_step(
+    project_id: str,
+    step_id: str,
+    request: SkipStepRequest,
+    user: RequireAuth,
+) -> NextStepResponse:
+    """Mark a next step as skipped."""
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    engine = get_next_steps_engine()
+
+    # Verify step exists and belongs to project
+    existing = engine.get_step(step_id)
+    if not existing or existing.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Next step not found in this project")
+
+    step = engine.skip_step(step_id, reason=request.reason)
+
+    if not step:
+        raise HTTPException(status_code=404, detail="Failed to skip step")
+
+    return _step_to_response(step)
+
+
+@router.get(
+    "/projects/{project_id}/progress",
+    response_model=ProjectProgress,
+)
+async def get_project_progress(
+    project_id: str,
+    user: RequireAuth,
+) -> ProjectProgress:
+    """Get progress metrics for a project's next steps."""
+    state = project_states.get(project_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    engine = get_next_steps_engine()
+    progress = engine.get_progress(project_id)
+
+    return progress

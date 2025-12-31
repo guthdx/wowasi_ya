@@ -292,13 +292,28 @@ This is what makes us different. Each document type has predefined actions.
 
 **Goal:** Backend support for tracking next steps
 
-- [ ] Create next_step_templates table with data for all 15 doc types
-- [ ] Create project_next_steps table
-- [ ] Build API endpoints for CRUD on next steps
-- [ ] Add progress calculation logic
-- [ ] Write tests for next steps engine
+- [x] Create next_step_templates with data for all 15 doc types (JSONL-based, 37 templates)
+- [x] Create project_next_steps persistence (JSONL-based)
+- [x] Build API endpoints for CRUD on next steps
+- [x] Add progress calculation logic
+- [x] Basic tests for next steps engine
 
-**Deliverable:** API returns next steps and tracks completion
+**Deliverable:** API returns next steps and tracks completion ✅
+
+**Completed:** 2025-12-30
+
+**New Files:**
+- `src/wowasi_ya/models/next_steps.py` - Models and 37 predefined templates
+- `src/wowasi_ya/core/next_steps.py` - NextStepsEngine with JSONL persistence
+
+**New API Endpoints:**
+- `POST /projects/{id}/next-steps` - Create steps for a project
+- `GET /projects/{id}/next-steps` - List all steps (with optional document_type filter)
+- `GET /projects/{id}/next-steps/{step_id}` - Get specific step
+- `PATCH /projects/{id}/next-steps/{step_id}` - Update step status/notes
+- `POST /projects/{id}/next-steps/{step_id}/complete` - Mark step complete
+- `POST /projects/{id}/next-steps/{step_id}/skip` - Skip a step
+- `GET /projects/{id}/progress` - Get progress metrics
 
 ---
 
