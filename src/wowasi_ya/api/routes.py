@@ -379,8 +379,8 @@ async def publish_to_outline(
 
 
 @router.get("/projects")
-async def list_projects(user: RequireAuth) -> list[dict]:
-    """List all projects for the current user."""
+async def list_projects() -> list[dict]:
+    """List all projects (public read access for portal)."""
     return [
         {
             "id": state.id,
@@ -631,7 +631,6 @@ async def create_next_steps(
 )
 async def get_next_steps(
     project_id: str,
-    user: RequireAuth,
     document_type: str | None = None,
 ) -> NextStepsListResponse:
     """Get all next steps for a project.
@@ -806,7 +805,6 @@ async def skip_next_step(
 )
 async def get_project_progress(
     project_id: str,
-    user: RequireAuth,
 ) -> ProjectProgress:
     """Get progress metrics for a project's next steps."""
     state = project_states.get(project_id)
