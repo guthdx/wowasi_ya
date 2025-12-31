@@ -6,26 +6,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚨 ACTIVE WORK IN PROGRESS - READ FIRST
 
-**Last Updated:** December 15, 2025
+**Last Updated:** December 30, 2025
 
-**Current Project:** Prompt Quality Enhancement - Making documents more professional and senior-level
+**Current Project:** Web Portal & Next Steps Engine - Complete project tracking system
 
-**Status:** Phase 1 Complete - 3 of 15 documents enhanced (Budget, Risks, SOPs)
+**Status:** Phase 4 Complete - Portal deployed at https://portal.iyeska.net
 
-**📋 CRITICAL: Read `PROMPT_ENHANCEMENT_STATUS.md` before making changes!**
+**📋 Key Documents:**
+- `USERS_GUIDE.md` - Complete workflow guide for all tools
+- `API_SECURITY.md` - Endpoint security documentation
+- `WEB_PORTAL_PLAN.md` - Portal implementation details
+- `PROMPT_ENHANCEMENT_STATUS.md` - Document quality improvements
 
-That document contains:
-- Complete context of what we're doing and why
-- Technical details of changes made
-- Test results showing 21x quality improvement
-- Next steps for enhancing remaining 12 documents
-- Important notes about .env configuration
+**Recent Completions:**
+- ✅ Phase 1: Outline Wiki integration (publish documents)
+- ✅ Phase 2: Wowasi → Outline API (programmatic publishing)
+- ✅ Phase 3: Next Steps Engine (actionable tasks for each document)
+- ✅ Phase 4: Web Portal (React dashboard at portal.iyeska.net)
 
 **Quick Summary:**
-- Added frameworks research agent that runs on every project
-- Created document-specific expert prompts for Budget, Risks, SOPs
-- Remaining 12 document types still use generic prompts
-- Quality dramatically improved: junior-level → senior-level output
+- Portal provides visual project tracking at https://portal.iyeska.net
+- Next Steps Engine creates actionable tasks for each of 15 documents
+- Read-only endpoints are public for portal access
+- Write operations require HTTP Basic authentication
 
 ---
 
@@ -85,9 +88,49 @@ docker compose up -d
 
 **Direct port access (fallback):**
 - API: http://localhost:8001
+- Portal: http://localhost:3003
 
 **Port Allocation** (per PORT_REGISTRY.md):
 - API: 8001
+- Portal: 3003
+
+## Web Portal
+
+The portal provides a visual dashboard for project tracking at https://portal.iyeska.net
+
+**Tech Stack:**
+- React 19 + TypeScript + Vite 7
+- Tailwind CSS v4
+- TanStack Query (React Query) for data fetching
+- Nginx for static serving in Docker
+
+**Local Development:**
+```bash
+cd portal
+npm install
+npm run dev  # Runs on http://localhost:5173
+```
+
+**Docker Deployment:**
+```bash
+# Build and run portal container
+docker compose -f docker-compose.portal.yml up -d --build
+
+# Access at http://localhost:3003
+```
+
+**Production URL:** https://portal.iyeska.net (via Cloudflare Tunnel)
+
+**Portal Features:**
+- Dashboard with project list and status overview
+- Project view with documents organized by phase
+- Progress tracking with visual indicators
+- Next steps management (complete/skip actions)
+
+**Related Files:**
+- `portal/` - React application source
+- `docker-compose.portal.yml` - Portal container config
+- `portal/nginx.conf` - Nginx SPA configuration
 
 ## Architecture
 
