@@ -297,3 +297,55 @@ class QualityChecker:
         )
 
         return max(0.0, 1.0 - deduction)
+
+    def generate_quality_report(self, project: GeneratedProject) -> str:
+        """Generate a formatted quality report for display.
+
+        Args:
+            project: Complete generated project.
+
+        Returns:
+            Formatted string report.
+        """
+        issues = self.check_project(project)
+        score = self.get_quality_score(issues)
+
+        # Build report
+        lines = []
+        lines.append(f"Documents Generated: {len(project.documents)}/15")
+        lines.append(f"Total Word Count: {project.total_word_count:,}")
+        lines.append(f"Quality Score: {score:.0%}")
+        lines.append("")
+
+        # Group issues by severity
+        errors = [i for i in issues if i.severity == IssueSeverity.ERROR]
+        warnings = [i for i in issues if i.severity == IssueSeverity.WARNING]
+        infos = [i for i in issues if i.severity == IssueSeverity.INFO]
+
+        if errors:
+            lines.append(f"[red]Errors ({len(errors)}):[/red]")
+            for issue in errors[:5]:
+                lines.append(f"  • {issue.document}: {issue.message}")
+            if len(errors) > 5:
+                lines.append(f"  ... and {len(errors) - 5} more")
+            lines.append("")
+
+        if warnings:
+            lines.append(f"[yellow]Warnings ({len(warnings)}):[/yellow]")
+            for issue in warnings[:5]:
+                lines.append(f"  • {issue.document}: {issue.message}")
+            if len(warnings) > 5:
+                lines.append(f"  ... and {len(warnings) - 5} more")
+            lines.append("")
+
+        if infos:
+            lines.append(f"[blue]Info ({len(infos)}):[/blue]")
+            for issue in infos[:3]:
+                lines.append(f"  • {issue.document}: {issue.message}")
+            if len(infos) > 3:
+                lines.append(f"  ... and {len(infos) - 3} more")
+
+        if not issues:
+            lines.append("[green]✓ No quality issues found![/green]")
+
+        return "\n".join(lines)

@@ -1,8 +1,34 @@
 # Prompt Enhancement Project - Status Report
-**Date:** December 31, 2025
-**Status:** ✅ Phase 1 Complete - All 15 Documents Enhanced with Expert Personas
-**Current Work:** Quality checker improvements implemented, AI writing tell prevention planned
-**Next Session:** Test generation with quality improvements, then implement HUMAN_WRITING_STYLE
+**Date:** January 13, 2026
+**Status:** ✅ Truncation Issue SOLVED - Streaming enabled for long documents
+**Current Work:** Evaluating writing quality on test generation
+**Next Session:** Review generated docs, tune prompts if AI slop persists
+
+---
+
+## January 13, 2026 - Truncation Fix
+
+### Problem
+Documents were being truncated mid-sentence (e.g., SOP ending at "Current stak") due to 8,192 token output limit.
+
+### Solution Implemented
+1. **Streaming enabled** in `llm_client.py` for Claude API calls with `max_tokens > 8000`
+2. **Token limit increased** to 32,000 in `.env` (`MAX_GENERATION_TOKENS=32000`)
+3. **Missing method added** to `quality.py` (`generate_quality_report`)
+
+### Test Results
+- **Generated:** 15 complete documents, 55,143 total words
+- **Largest document:** SOPs.md at 10,360 words (previously truncated)
+- **Published to Outline:** https://docs.iyeska.net/collection/EOIe0xThEw
+
+### Provider Comparison (from research)
+| Provider | Max Output Tokens | Cost/1M Output |
+|----------|------------------|----------------|
+| Claude Sonnet 4.5 | 64,000 | $15 |
+| GPT-5.2 | 128,000 | $14 |
+| Llama 3.3 70B (local) | 2,048-8,192 | $0 |
+
+**Decision:** Using Claude Sonnet 4.5 for generation solves truncation and may improve writing quality.
 
 ---
 

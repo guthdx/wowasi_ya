@@ -88,7 +88,7 @@ class ClaudeClient:
         max_tokens: int = 4096,
         temperature: float = 0.7,
     ) -> str:
-        """Generate text using Claude API.
+        """Generate text using Claude API with streaming for long requests.
 
         Args:
             prompt: The input prompt.
@@ -101,20 +101,36 @@ class ClaudeClient:
         client = self._ensure_client()
 
         try:
-            response = await client.messages.create(
-                model=self.settings.claude_model,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            # Use streaming for requests with high token counts to avoid timeout
+            # Claude API requires streaming for operations >10 minutes
+            if max_tokens > 8000:
+                logger.info(f"Using streaming for large request ({max_tokens} max tokens)")
+                content = ""
+                async with client.messages.stream(
+                    model=self.settings.claude_model,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    messages=[{"role": "user", "content": prompt}],
+                ) as stream:
+                    async for text in stream.text_stream:
+                        content += text
+                return content
+            else:
+                # Use non-streaming for smaller requests (faster)
+                response = await client.messages.create(
+                    model=self.settings.claude_model,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    messages=[{"role": "user", "content": prompt}],
+                )
 
-            # Extract text content from response
-            content = ""
-            for block in response.content:
-                if hasattr(block, "text"):
-                    content += block.text
+                # Extract text content from response
+                content = ""
+                for block in response.content:
+                    if hasattr(block, "text"):
+                        content += block.text
 
-            return content
+                return content
 
         except Exception as e:
             logger.error(f"Claude API error: {e}")

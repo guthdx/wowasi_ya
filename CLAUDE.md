@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚨 ACTIVE WORK IN PROGRESS - READ FIRST
 
-**Last Updated:** December 31, 2025
+**Last Updated:** January 13, 2026
 
-**Current Project:** Document Quality Improvements - Eliminate AI writing tells
+**Current Project:** Document Quality Improvements - Truncation Fixed, Testing Quality
 
-**Status:** Quality checker implemented, prompt style guide planned
+**Status:** Streaming enabled, truncation solved, evaluating writing quality
 
 **📋 Key Documents:**
 - `PROMPT_ENHANCEMENT_STATUS.md` - Document quality improvements (main status doc)
@@ -19,21 +19,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `WEB_PORTAL_PLAN.md` - Portal implementation details
 
 **Recent Completions:**
-- ✅ All 15 document prompts enhanced with senior expert personas
-- ✅ Quality checker with truncation detection and retry logic
-- ✅ AI vocabulary and filler phrase detection
-- ✅ Quality grading system (A-F grades)
+- ✅ **Truncation issue SOLVED** - Added streaming for Claude API calls >8K tokens
+- ✅ Token limit increased to 32,000 (was 8,192)
+- ✅ Test generation: 55,143 words across 15 complete documents
+- ✅ Published to Outline: https://docs.iyeska.net/collection/EOIe0xThEw
 - ✅ Portal deployed at https://portal.iyeska.net
 
 **In Progress:**
-- 🔄 Test generation with quality improvements
-- 📋 Planned: HUMAN_WRITING_STYLE constant to ban AI tells in prompts
+- 🔄 Evaluating writing quality (AI slop reduction)
+- 📋 Planned: Prompt simplification to reduce AI-sounding output
 
 **Quick Summary:**
-- Quality checker now detects AI writing patterns and grades documents
-- Generator retries truncated documents automatically
-- Next step: Add style guide to prompts to prevent AI tells at source
-- See `~/.claude/plans/compiled-sleeping-quail.md` for implementation plan
+- **Truncation fixed**: Streaming enabled in `llm_client.py` for long-running requests
+- **Config**: `MAX_GENERATION_TOKENS=32000` in `.env`
+- **Provider comparison**: Claude Sonnet 4.5 (64K output limit) vs GPT-5.2 (128K output limit)
+- Next step: Review generated docs for quality, tune prompts if needed
 
 ---
 
