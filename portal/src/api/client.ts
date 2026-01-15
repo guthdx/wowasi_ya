@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { CreateProjectInput, DocumentExtractResult, NextStep, Project, ProjectProgress } from '../types';
+import type { CreateProjectInput, DiscoveryResponse, DocumentExtractResult, NextStep, Project, ProjectProgress } from '../types';
 
 // API base URL - configurable via environment variable
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wowasi.iyeska.net/api/v1';
@@ -55,6 +55,19 @@ export const projectsApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+    });
+    return data;
+  },
+
+  getDiscovery: async (id: string): Promise<DiscoveryResponse> => {
+    const { data } = await api.get(`/projects/${id}/discovery`);
+    return data;
+  },
+
+  approve: async (id: string, approved: boolean = true, useSanitized: boolean = true): Promise<{ status: string; message: string }> => {
+    const { data } = await api.post(`/projects/${id}/approve`, {
+      approved,
+      use_sanitized: useSanitized,
     });
     return data;
   },

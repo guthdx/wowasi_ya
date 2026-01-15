@@ -160,3 +160,24 @@ export interface CreateProjectInput {
   additional_context?: string;
   output_format?: string;
 }
+
+// Discovery types
+export interface DomainMatch {
+  domain: string;
+  confidence: number;
+  matched_keywords: string[];
+}
+
+export interface AgentDefinition {
+  name: string;
+  domain: string;
+  expertise_areas: string[];
+  research_questions: string[];
+}
+
+export interface DiscoveryResponse {
+  project_id: string;
+  domains: DomainMatch[];
+  agents: AgentDefinition[];
+  privacy_scan: PrivacyScan;
+}

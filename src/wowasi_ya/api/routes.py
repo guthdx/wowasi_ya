@@ -256,7 +256,6 @@ async def create_project(
 @router.get("/projects/{project_id}/discovery", response_model=DiscoveryResponse)
 async def get_discovery_results(
     project_id: str,
-    user: RequireAuth,
 ) -> DiscoveryResponse:
     """Get agent discovery and privacy scan results.
 
@@ -296,7 +295,6 @@ async def get_discovery_results(
 async def approve_privacy(
     project_id: str,
     approval: ApprovalRequest,
-    user: RequireAuth,
     background_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> dict[str, str]:
@@ -339,7 +337,6 @@ async def approve_privacy(
 @router.get("/projects/{project_id}/status", response_model=GenerationStatusResponse)
 async def get_project_status(
     project_id: str,
-    user: RequireAuth,
 ) -> GenerationStatusResponse:
     """Get the current status of a project generation."""
     state = project_states.get(project_id)

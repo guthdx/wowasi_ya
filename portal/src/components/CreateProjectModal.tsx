@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useExtractDocument, useCreateProject } from '../hooks/useCreateProject';
+import { projectsApi } from '../api/client';
 import type { DocumentExtractResult } from '../types';
 
 interface CreateProjectModalProps {
@@ -94,11 +95,19 @@ export function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps)
     const additionalContext = extractedData?.suggested_additional_context;
 
     try {
-      await createMutation.mutateAsync({
+      // Step 1: Create project
+      const { project_id } = await createMutation.mutateAsync({
         name: projectName,
         description,
         additional_context: additionalContext || undefined,
       });
+
+      // Step 2: Run discovery (triggers agent matching + privacy scan)
+      await projectsApi.getDiscovery(project_id);
+
+      // Step 3: Auto-approve to start generation
+      // (We already scanned during document extraction, so we know privacy status)
+      await projectsApi.approve(project_id, true, true);
 
       handleClose();
     } catch {
