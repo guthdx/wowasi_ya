@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { NextStep, Project, ProjectProgress } from '../types';
+import type { CreateProjectInput, DocumentExtractResult, NextStep, Project, ProjectProgress } from '../types';
 
 // API base URL - configurable via environment variable
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wowasi.iyeska.net/api/v1';
@@ -39,6 +39,23 @@ export const projectsApi = {
 
   getResult: async (id: string) => {
     const { data } = await api.get(`/projects/${id}/result`);
+    return data;
+  },
+
+  create: async (input: CreateProjectInput): Promise<{ project_id: string; status: string; message: string }> => {
+    const { data } = await api.post('/projects', input);
+    return data;
+  },
+
+  extractDocument: async (file: File): Promise<DocumentExtractResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const { data } = await api.post('/extract-document', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return data;
   },
 };

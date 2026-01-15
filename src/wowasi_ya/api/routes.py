@@ -3,13 +3,14 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from wowasi_ya.api.auth import RequireAuth, User
 from wowasi_ya.config import Settings, get_settings
 from wowasi_ya.core import (
     AgentDiscoveryService,
+    DocumentExtractor,
     DocumentGenerator,
     OutputManager,
     PrivacyLayer,
@@ -70,10 +71,39 @@ class GenerationStatusResponse(BaseModel):
     error: str | None = None
 
 
+# Document upload constraints
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
+ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "md"}
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+    "text/markdown",
+}
+
+
+class DocumentExtractResponse(BaseModel):
+    """Response from document extraction."""
+
+    extracted_text: str = Field(..., description="Extracted text content")
+    char_count: int = Field(..., description="Number of characters extracted")
+    page_count: int | None = Field(default=None, description="Number of pages (for PDFs)")
+    was_truncated: bool = Field(default=False, description="Whether text was truncated")
+    truncation_reason: str | None = Field(default=None, description="Reason for truncation")
+    warnings: list[str] = Field(default_factory=list, description="Extraction warnings")
+    privacy_scan: PrivacyScanResult = Field(..., description="Privacy scan results")
+    suggested_description: str = Field(..., description="Suggested description (first 2000 chars)")
+    suggested_additional_context: str | None = Field(
+        default=None,
+        description="Suggested additional context (remainder after 2000 chars)",
+    )
+
+
 # Initialize services
 discovery_service = AgentDiscoveryService()
 privacy_layer = PrivacyLayer()
 quality_checker = QualityChecker()
+document_extractor = DocumentExtractor()
 
 
 @router.get("/health")
@@ -124,10 +154,78 @@ async def health_check(
     return health_info
 
 
+@router.post("/extract-document", response_model=DocumentExtractResponse)
+async def extract_document(
+    file: Annotated[UploadFile, File(description="Document to extract text from (PDF, DOCX, TXT)")],
+) -> DocumentExtractResponse:
+    """Extract text from an uploaded document.
+
+    Supports PDF, DOCX, and TXT files up to 10MB.
+    Returns extracted text with privacy scan results for review before project creation.
+
+    The extracted text is automatically split:
+    - First 2000 chars -> suggested_description
+    - Remainder -> suggested_additional_context
+    """
+    from io import BytesIO
+
+    # Validate filename
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
+
+    # Validate file extension
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: .{ext}. Supported types: PDF, DOCX, TXT",
+        )
+
+    # Read file content and check size
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size: {MAX_UPLOAD_SIZE // (1024 * 1024)}MB",
+        )
+
+    if len(contents) == 0:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    # Extract text
+    try:
+        result = document_extractor.extract(BytesIO(contents), file.filename)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    # Run privacy scan on extracted text
+    privacy_scan = privacy_layer.scan(result.text)
+
+    # Split into description and additional_context
+    description_limit = 2000
+    if result.char_count <= description_limit:
+        suggested_description = result.text
+        suggested_additional_context = None
+    else:
+        suggested_description = result.text[:description_limit]
+        suggested_additional_context = result.text[description_limit:]
+
+    return DocumentExtractResponse(
+        extracted_text=result.text,
+        char_count=result.char_count,
+        page_count=result.page_count,
+        was_truncated=result.was_truncated,
+        truncation_reason=result.truncation_reason,
+        warnings=result.warnings,
+        privacy_scan=privacy_scan,
+        suggested_description=suggested_description,
+        suggested_additional_context=suggested_additional_context,
+    )
+
+
 @router.post("/projects", response_model=ProjectCreateResponse)
 async def create_project(
     project: ProjectInput,
-    user: RequireAuth,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ProjectCreateResponse:
     """Create a new project and start Phase 0 (Agent Discovery).

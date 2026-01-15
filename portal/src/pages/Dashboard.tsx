@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useProjects } from '../hooks/useProjects';
 import { ProgressBar } from '../components/ProgressBar';
 import { GenerationProgress } from '../components/GenerationProgress';
+import { CreateProjectModal } from '../components/CreateProjectModal';
 import type { Project, ProjectStatus } from '../types';
 
 const statusLabels: Record<ProjectStatus, string> = {
@@ -112,6 +114,7 @@ function ActiveProjectCard({ project }: { project: Project }) {
 }
 
 export function Dashboard() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { data: projects, isLoading, error } = useProjects();
 
   if (isLoading) {
@@ -149,11 +152,22 @@ export function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-charcoal dark:text-white">Projects</h1>
-        <p className="mt-1 text-slate dark:text-slate-light">
-          View and manage your project documentation
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-charcoal dark:text-white">Projects</h1>
+          <p className="mt-1 text-slate dark:text-slate-light">
+            View and manage your project documentation
+          </p>
+        </div>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-slate hover:bg-slate/80 text-white font-medium rounded-lg transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          New Project
+        </button>
       </div>
 
       {/* Stats */}
@@ -257,15 +271,31 @@ export function Dashboard() {
           </svg>
           <h3 className="mt-4 text-lg font-medium text-charcoal dark:text-white">No projects yet</h3>
           <p className="mt-2 text-sm text-slate dark:text-slate-light max-w-md mx-auto">
-            Use the Wowasi Ya CLI or API to generate your first project documentation.
+            Create your first project by clicking the button above, or use the CLI.
           </p>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col items-center gap-4">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-slate hover:bg-slate/80 text-white font-medium rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Project
+            </button>
+            <span className="text-sm text-slate/50">or use the CLI:</span>
             <code className="px-4 py-2 bg-charcoal/5 dark:bg-white/5 rounded-lg text-sm text-charcoal dark:text-white font-mono">
               wowasi generate "Project Name" "Description..."
             </code>
           </div>
         </div>
       )}
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }

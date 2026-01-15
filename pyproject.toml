@@ -29,6 +29,8 @@ dependencies = [
     "rich>=13.7.0",
     "jinja2>=3.1.0",
     "outline-wiki-api>=0.3.0",
+    "pypdf>=4.0.0",
+    "python-docx>=1.1.0",
 ]
 
 [project.optional-dependencies]

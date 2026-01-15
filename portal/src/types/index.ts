@@ -122,3 +122,41 @@ export const DOCUMENT_TITLES: Record<DocumentType, string> = {
   status_updates: 'Status Updates',
   meeting_notes: 'Meeting Notes',
 };
+
+// Document Upload types
+export interface PrivacyFlag {
+  data_type: string;
+  text: string;
+  confidence: number;
+  context: string;
+}
+
+export interface PrivacyScan {
+  original_text: string;
+  flags: PrivacyFlag[];
+  sanitized_text: string;
+  requires_approval: boolean;
+  high_risk_count: number;
+  medium_risk_count: number;
+}
+
+export interface DocumentExtractResult {
+  extracted_text: string;
+  char_count: number;
+  page_count: number | null;
+  was_truncated: boolean;
+  truncation_reason: string | null;
+  warnings: string[];
+  privacy_scan: PrivacyScan;
+  suggested_description: string;
+  suggested_additional_context: string | null;
+}
+
+// Project creation types
+export interface CreateProjectInput {
+  name: string;
+  description: string;
+  area?: string;
+  additional_context?: string;
+  output_format?: string;
+}

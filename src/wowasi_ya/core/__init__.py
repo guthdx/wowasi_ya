@@ -1,6 +1,7 @@
 """Core business logic modules for Wowasi_ya."""
 
 from wowasi_ya.core.agent_discovery import AgentDiscoveryService
+from wowasi_ya.core.document_extractor import DocumentExtractor, ExtractionResult
 from wowasi_ya.core.generator import DocumentGenerator
 from wowasi_ya.core.next_steps import (
     NextStepsEngine,
@@ -16,7 +17,9 @@ from wowasi_ya.core.research import ResearchEngine
 
 __all__ = [
     "AgentDiscoveryService",
+    "DocumentExtractor",
     "DocumentGenerator",
+    "ExtractionResult",
     "NextStepsEngine",
     "NextStepsStore",
     "OutlineClient",
