@@ -623,6 +623,8 @@ async def run_generation_pipeline(
         output_obsidian = False
         output_git = False
         output_gdrive = False
+        output_outline = False
+        outline_collection_id = None
 
         # Write to primary output format
         output_paths = await output_manager.write(
@@ -652,6 +654,23 @@ async def run_generation_pipeline(
                 # Don't fail the whole operation if gdrive sync fails
                 print(f"⚠ Warning: Google Drive sync failed: {e}")
 
+        # Auto-publish to Outline if enabled
+        if settings.outline_auto_publish and state.input.output_format != "outline":
+            try:
+                from wowasi_ya.core.outline import OutlinePublisher
+                outline_publisher = OutlinePublisher(settings=settings)
+                publish_result = await outline_publisher.publish(
+                    generated_project,
+                    enable_sharing=True,
+                )
+                outline_collection_id = publish_result.collection.id
+                state.output_paths.append(f"outline:{publish_result.collection.url}")
+                output_outline = True
+                print(f"✓ Published to Outline: {publish_result.collection.url}")
+            except Exception as e:
+                # Don't fail the whole operation if Outline publish fails
+                print(f"⚠ Warning: Outline publish failed: {e}")
+
         # Log output phase
         output_duration = time.time() - output_start
         output_directory = output_paths[0] if output_paths else None
@@ -662,7 +681,9 @@ async def run_generation_pipeline(
             obsidian=output_obsidian,
             git=output_git,
             gdrive=output_gdrive,
+            outline=output_outline,
             output_directory=output_directory,
+            outline_collection_id=outline_collection_id,
         )
 
         # Complete
