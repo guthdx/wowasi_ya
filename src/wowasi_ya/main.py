@@ -66,16 +66,39 @@ def create_app() -> FastAPI:
     # Include API routes
     app.include_router(router, prefix="/api/v1", tags=["projects"])
 
-    # Mount static files
-    static_dir = Path(__file__).parent.parent.parent / "static"
-    if static_dir.exists():
-        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    # Serve portal from portal/dist (built React app)
+    portal_dir = Path(__file__).parent.parent.parent / "portal" / "dist"
+    if portal_dir.exists():
+        # Mount assets folder for JS/CSS bundles
+        assets_dir = portal_dir / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
-        # Serve index.html at root
+        # Serve static files from portal dist (images, etc.)
+        @app.get("/vite.svg")
+        async def serve_vite_svg() -> FileResponse:
+            return FileResponse(str(portal_dir / "vite.svg"))
+
+        @app.get("/iyeska-logo.png")
+        async def serve_logo() -> FileResponse:
+            return FileResponse(str(portal_dir / "iyeska-logo.png"))
+
+        # SPA catch-all: serve index.html for all non-API routes
+        # This enables React Router to handle client-side routing
+        @app.get("/{path:path}")
+        async def serve_spa(path: str) -> FileResponse:
+            """Serve the portal SPA for all non-API routes."""
+            # Check if it's a file that exists in portal dist
+            file_path = portal_dir / path
+            if file_path.exists() and file_path.is_file():
+                return FileResponse(str(file_path))
+            # Otherwise serve index.html for SPA routing
+            return FileResponse(str(portal_dir / "index.html"))
+
         @app.get("/")
         async def read_root() -> FileResponse:
-            """Serve the main web interface."""
-            return FileResponse(str(static_dir / "index.html"))
+            """Serve the portal dashboard."""
+            return FileResponse(str(portal_dir / "index.html"))
 
     return app
 

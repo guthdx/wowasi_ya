@@ -2,7 +2,8 @@ import axios from 'axios';
 import type { AnalyticsProject, AnalyticsSummary, CreateProjectInput, DiscoveryResponse, DocumentExtractResult, NextStep, Project, ProjectProgress } from '../types';
 
 // API configuration from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wowasi.iyeska.net/api/v1';
+// Default to relative URL for same-domain deployment
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 const api = axios.create({
