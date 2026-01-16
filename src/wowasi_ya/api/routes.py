@@ -663,7 +663,7 @@ async def run_generation_pipeline(
                     generated_project,
                     enable_sharing=True,
                 )
-                outline_collection_id = publish_result.collection.id
+                outline_collection_id = str(publish_result.collection.id)
                 state.output_paths.append(f"outline:{publish_result.collection.url}")
                 output_outline = True
                 print(f"✓ Published to Outline: {publish_result.collection.url}")
