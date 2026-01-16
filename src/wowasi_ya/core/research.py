@@ -111,8 +111,18 @@ class ResearchEngine:
                 messages=[{"role": "user", "content": prompt}],
             )
 
+            # Capture token usage for cost tracking
+            input_tokens = 0
+            output_tokens = 0
+            if hasattr(response, "usage") and response.usage:
+                input_tokens = response.usage.input_tokens
+                output_tokens = response.usage.output_tokens
+                logger.info(
+                    f"Research agent {agent.id}: {input_tokens}+{output_tokens} tokens"
+                )
+
             # Parse the response
-            return self._parse_response(agent, response)
+            return self._parse_response(agent, response, input_tokens, output_tokens)
 
         except Exception as e:
             # Return error result
@@ -271,7 +281,13 @@ Provide findings in this EXACT structure:
 5. Focus on nonprofit, tribal, and public sector contexts
 """
 
-    def _parse_response(self, agent: AgentDefinition, response: Any) -> AgentResult:
+    def _parse_response(
+        self,
+        agent: AgentDefinition,
+        response: Any,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+    ) -> AgentResult:
         """Parse Claude API response into AgentResult."""
         # Extract text content
         raw_text = ""
@@ -312,6 +328,8 @@ Provide findings in this EXACT structure:
             sources=sources,
             recommendations=recommendations,
             raw_response=raw_text,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
         )
 
     async def execute_all(

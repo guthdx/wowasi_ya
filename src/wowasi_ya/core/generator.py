@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any
 
 from wowasi_ya.config import Settings, get_settings
-from wowasi_ya.core.llm_client import BaseLLMClient, get_generation_client
+from wowasi_ya.core.llm_client import BaseLLMClient, LLMResponse, get_generation_client
 
 logger = logging.getLogger(__name__)
 from wowasi_ya.models.agent import AgentResult
@@ -139,7 +139,7 @@ class DocumentGenerator:
         project: ProjectInput,
         research_results: list[AgentResult],
         previous_docs: list[Document],
-    ) -> Document:
+    ) -> tuple[Document, int, int]:
         """Generate a single document.
 
         Args:
@@ -149,7 +149,7 @@ class DocumentGenerator:
             previous_docs: Previously generated documents for context.
 
         Returns:
-            Generated document.
+            Tuple of (Document, input_tokens, output_tokens).
         """
         client = await self._get_client()
         config = DOCUMENT_CONFIG[doc_type]
@@ -160,26 +160,28 @@ class DocumentGenerator:
 
         try:
             # Use abstracted LLM client (works with both Claude and Llama)
-            content = await client.generate(
+            response = await client.generate(
                 prompt=prompt,
                 max_tokens=self.settings.max_generation_tokens,
                 temperature=0.7,
             )
 
-            return Document(
+            doc = Document(
                 type=doc_type,
                 title=config["title"],
-                content=content,
+                content=response.content,
                 folder=config["folder"],
                 filename=config["filename"],
                 generated_at=datetime.utcnow(),
-                word_count=len(content.split()),
+                word_count=len(response.content.split()),
             )
+
+            return doc, response.input_tokens, response.output_tokens
 
         except Exception as e:
             logger.error(f"Error generating {doc_type}: {e}")
-            # Return error document
-            return Document(
+            # Return error document with zero tokens
+            error_doc = Document(
                 type=doc_type,
                 title=config["title"],
                 content=f"# {config['title']}\n\n*Error generating document: {e!s}*",
@@ -187,6 +189,7 @@ class DocumentGenerator:
                 filename=config["filename"],
                 word_count=0,
             )
+            return error_doc, 0, 0
 
     def _build_generation_prompt(
         self,
@@ -2896,7 +2899,7 @@ Write the complete Glossary document now.
         project: ProjectInput,
         research_results: list[AgentResult],
         previous_docs: list[Document],
-    ) -> list[Document]:
+    ) -> tuple[list[Document], int, int]:
         """Generate all documents in a batch.
 
         Args:
@@ -2906,15 +2909,21 @@ Write the complete Glossary document now.
             previous_docs: Previously generated documents.
 
         Returns:
-            List of generated documents.
+            Tuple of (list of documents, total input tokens, total output tokens).
         """
         documents = []
+        batch_input_tokens = 0
+        batch_output_tokens = 0
+
         for doc_type in batch.document_types:
-            doc = await self.generate_document(
+            doc, input_tokens, output_tokens = await self.generate_document(
                 doc_type, project, research_results, previous_docs + documents
             )
             documents.append(doc)
-        return documents
+            batch_input_tokens += input_tokens
+            batch_output_tokens += output_tokens
+
+        return documents, batch_input_tokens, batch_output_tokens
 
     async def generate_all(
         self,
@@ -2928,20 +2937,34 @@ Write the complete Glossary document now.
             research_results: Research results from Phase 1.
 
         Returns:
-            Complete generated project.
+            Complete generated project with token usage stats.
         """
         start_time = datetime.utcnow()
         all_documents: list[Document] = []
+        total_input_tokens = 0
+        total_output_tokens = 0
 
         # Process batches in order (respecting dependencies)
         for batch in DOCUMENT_BATCHES:
-            docs = await self.generate_batch(
+            docs, input_tokens, output_tokens = await self.generate_batch(
                 batch, project, research_results, all_documents
             )
             all_documents.extend(docs)
+            total_input_tokens += input_tokens
+            total_output_tokens += output_tokens
+
+            logger.info(
+                f"Batch {batch.batch_number} complete: "
+                f"{len(docs)} docs, {input_tokens}+{output_tokens} tokens"
+            )
 
         end_time = datetime.utcnow()
         generation_time = (end_time - start_time).total_seconds()
+
+        logger.info(
+            f"Generation complete: {len(all_documents)} docs, "
+            f"{total_input_tokens}+{total_output_tokens} total tokens"
+        )
 
         return GeneratedProject(
             project_name=project.name,
@@ -2950,4 +2973,6 @@ Write the complete Glossary document now.
             total_word_count=sum(d.word_count for d in all_documents),
             generation_time_seconds=generation_time,
             created_at=start_time,
+            total_input_tokens=total_input_tokens,
+            total_output_tokens=total_output_tokens,
         )

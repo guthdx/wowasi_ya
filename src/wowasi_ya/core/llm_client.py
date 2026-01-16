@@ -13,6 +13,7 @@ To add a new provider, implement BaseLLMClient protocol and update the factory.
 """
 
 import logging
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 import httpx
@@ -20,6 +21,20 @@ import httpx
 from wowasi_ya.config import Settings
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class LLMResponse:
+    """Response from an LLM client including content and usage metrics."""
+
+    content: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+    @property
+    def total_tokens(self) -> int:
+        """Total tokens used (input + output)."""
+        return self.input_tokens + self.output_tokens
 
 
 class BaseLLMClient(Protocol):
@@ -30,7 +45,7 @@ class BaseLLMClient(Protocol):
         prompt: str,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-    ) -> str:
+    ) -> LLMResponse:
         """Generate text from prompt.
 
         Args:
@@ -39,7 +54,7 @@ class BaseLLMClient(Protocol):
             temperature: Sampling temperature (0.0-1.0).
 
         Returns:
-            Generated text content.
+            LLMResponse with content and token usage.
         """
         ...
 
@@ -87,7 +102,7 @@ class ClaudeClient:
         prompt: str,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-    ) -> str:
+    ) -> LLMResponse:
         """Generate text using Claude API with streaming for long requests.
 
         Args:
@@ -96,7 +111,7 @@ class ClaudeClient:
             temperature: Sampling temperature.
 
         Returns:
-            Generated text content.
+            LLMResponse with content and token usage.
         """
         client = self._ensure_client()
 
@@ -109,6 +124,9 @@ class ClaudeClient:
             if max_tokens > 8000:
                 logger.info(f"Using streaming for large request ({max_tokens} max tokens)")
                 content = ""
+                input_tokens = 0
+                output_tokens = 0
+
                 async with client.messages.stream(
                     model=self.settings.claude_model,
                     max_tokens=max_tokens,
@@ -118,8 +136,15 @@ class ClaudeClient:
                     async for text in stream.text_stream:
                         content += text
 
-                    # CHECK STOP REASON - detect truncation
+                    # Get final message for usage stats and stop reason
                     final_message = await stream.get_final_message()
+
+                    # Capture token usage
+                    if hasattr(final_message, "usage") and final_message.usage:
+                        input_tokens = final_message.usage.input_tokens
+                        output_tokens = final_message.usage.output_tokens
+
+                    # CHECK STOP REASON - detect truncation
                     if final_message.stop_reason == "max_tokens":
                         logger.error(
                             f"⚠️ TRUNCATION DETECTED! stop_reason=max_tokens, "
@@ -128,10 +153,14 @@ class ClaudeClient:
                     else:
                         logger.info(
                             f"Streaming complete: stop_reason={final_message.stop_reason}, "
-                            f"{len(content)} chars"
+                            f"{len(content)} chars, {input_tokens}+{output_tokens} tokens"
                         )
 
-                return content
+                return LLMResponse(
+                    content=content,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                )
             else:
                 # Use non-streaming for smaller requests (faster)
                 response = await client.messages.create(
@@ -154,7 +183,23 @@ class ClaudeClient:
                     if hasattr(block, "text"):
                         content += block.text
 
-                return content
+                # Capture token usage
+                input_tokens = 0
+                output_tokens = 0
+                if hasattr(response, "usage") and response.usage:
+                    input_tokens = response.usage.input_tokens
+                    output_tokens = response.usage.output_tokens
+
+                logger.info(
+                    f"Claude response: {len(content)} chars, "
+                    f"{input_tokens}+{output_tokens} tokens"
+                )
+
+                return LLMResponse(
+                    content=content,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                )
 
         except Exception as e:
             logger.error(f"Claude API error: {e}")
@@ -194,7 +239,7 @@ class LlamaCPPClient:
         prompt: str,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-    ) -> str:
+    ) -> LLMResponse:
         """Generate text using Llama CPP server.
 
         Args:
@@ -203,7 +248,7 @@ class LlamaCPPClient:
             temperature: Sampling temperature.
 
         Returns:
-            Generated text content.
+            LLMResponse with content and token usage.
 
         Raises:
             httpx.HTTPError: If the request fails.
@@ -226,7 +271,25 @@ class LlamaCPPClient:
 
             # Extract content from OpenAI-compatible response
             content = data["choices"][0]["message"]["content"]
-            return content
+
+            # Extract token usage from OpenAI-compatible response
+            # Note: Llama CPP is free (local), so cost will be $0
+            input_tokens = 0
+            output_tokens = 0
+            if "usage" in data:
+                input_tokens = data["usage"].get("prompt_tokens", 0)
+                output_tokens = data["usage"].get("completion_tokens", 0)
+
+            logger.info(
+                f"Llama CPP response: {len(content)} chars, "
+                f"{input_tokens}+{output_tokens} tokens (local, $0 cost)"
+            )
+
+            return LLMResponse(
+                content=content,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+            )
 
         except httpx.HTTPError as e:
             logger.error(f"Llama CPP request failed: {e}")
@@ -294,7 +357,7 @@ class FallbackClient:
         prompt: str,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-    ) -> str:
+    ) -> LLMResponse:
         """Generate with Claude, fallback to Llama on errors."""
         try:
             return await self.claude_client.generate(prompt, max_tokens, temperature)

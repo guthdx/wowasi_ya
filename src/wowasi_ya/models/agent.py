@@ -47,3 +47,6 @@ class AgentResult(BaseModel):
         default=None,
         description="Raw response from Claude API",
     )
+    # Token usage for cost tracking
+    input_tokens: int = Field(default=0, description="Input tokens used")
+    output_tokens: int = Field(default=0, description="Output tokens used")

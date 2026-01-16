@@ -556,14 +556,16 @@ async def run_generation_pipeline(
         research_results = await research_engine.execute_all(agents, text_to_use)
         state.research_results["agent_results"] = [r.model_dump() for r in research_results]
 
-        # Log research phase (token tracking would require LLM client updates)
+        # Aggregate token usage from all research agents
         research_duration = time.time() - research_start
+        research_input_tokens = sum(r.input_tokens for r in research_results)
+        research_output_tokens = sum(r.output_tokens for r in research_results)
+
         analytics.log_research_complete(
             project_id=project_id,
             duration=research_duration,
-            # Token counts will be added when LLM client is updated
-            prompt_tokens=0,
-            completion_tokens=0,
+            prompt_tokens=research_input_tokens,
+            completion_tokens=research_output_tokens,
         )
 
         # Phase 2: Document Generation
@@ -578,7 +580,7 @@ async def run_generation_pipeline(
         # Calculate total words
         total_words = sum(len(d.content.split()) for d in generated_project.documents)
 
-        # Log generation phase
+        # Log generation phase with token usage
         generation_duration = time.time() - generation_start
         analytics.log_generation_complete(
             project_id=project_id,
@@ -586,6 +588,8 @@ async def run_generation_pipeline(
             documents_count=len(generated_project.documents),
             total_words=total_words,
             provider=settings.generation_provider,
+            prompt_tokens=generated_project.total_input_tokens,
+            completion_tokens=generated_project.total_output_tokens,
         )
 
         # Phase 3: Quality Check

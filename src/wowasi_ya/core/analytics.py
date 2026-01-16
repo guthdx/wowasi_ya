@@ -215,34 +215,42 @@ def log_generation_complete(
     documents_count: int,
     total_words: int,
     provider: str = "claude",
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
 ) -> None:
-    """Log generation phase completion."""
+    """Log generation phase completion with token usage."""
+    # Calculate generation cost
+    generation_cost = 0.0
+    if provider == "claude" and (prompt_tokens > 0 or completion_tokens > 0):
+        input_cost = (prompt_tokens / 1_000_000) * CLAUDE_INPUT_COST
+        output_cost = (completion_tokens / 1_000_000) * CLAUDE_OUTPUT_COST
+        generation_cost = input_cost + output_cost
+    # Llama is free (local inference)
+
     with get_db_connection() as conn:
-        # Get current token counts to calculate generation cost
-        row = conn.execute(
-            'SELECT generation_prompt_tokens, generation_completion_tokens FROM project_logs WHERE project_id = ?',
-            (project_id,)
-        ).fetchone()
-
-        generation_cost = 0.0
-        if row and provider == "claude":
-            prompt_tokens = row['generation_prompt_tokens'] or 0
-            completion_tokens = row['generation_completion_tokens'] or 0
-            input_cost = (prompt_tokens / 1_000_000) * CLAUDE_INPUT_COST
-            output_cost = (completion_tokens / 1_000_000) * CLAUDE_OUTPUT_COST
-            generation_cost = input_cost + output_cost
-        # Llama is free (local inference)
-
         conn.execute('''
             UPDATE project_logs SET
                 phase_generation_duration = ?,
                 documents_generated = ?,
                 total_words_generated = ?,
+                generation_prompt_tokens = ?,
+                generation_completion_tokens = ?,
+                generation_total_tokens = ?,
                 generation_cost_usd = ?,
                 generation_provider = ?,
                 current_phase = 'quality'
             WHERE project_id = ?
-        ''', (total_duration, documents_count, total_words, generation_cost, provider, project_id))
+        ''', (
+            total_duration,
+            documents_count,
+            total_words,
+            prompt_tokens,
+            completion_tokens,
+            prompt_tokens + completion_tokens,
+            generation_cost,
+            provider,
+            project_id,
+        ))
         conn.commit()
 
 

@@ -60,6 +60,9 @@ class GeneratedProject(BaseModel):
     generation_time_seconds: float = Field(default=0.0)
     output_paths: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    # Token usage for cost tracking
+    total_input_tokens: int = Field(default=0, description="Total input tokens used")
+    total_output_tokens: int = Field(default=0, description="Total output tokens used")
 
 
 # Document batch definitions (from Process-Workflow.md)
