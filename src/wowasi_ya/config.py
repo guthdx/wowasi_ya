@@ -16,6 +16,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        populate_by_name=True,
     )
 
     # Environment
@@ -35,6 +36,11 @@ class Settings(BaseSettings):
     )
     admin_username: str = "admin"
     admin_password: SecretStr = Field(default="changeme")
+    api_key: SecretStr | None = Field(
+        default=None,
+        alias="WOWASI_API_KEY",
+        description="API key for portal/external access",
+    )
 
     # Output
     output_dir: Path = Path("./output")

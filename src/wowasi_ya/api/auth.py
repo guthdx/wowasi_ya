@@ -3,8 +3,8 @@
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, APIKeyHeader
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -12,7 +12,8 @@ from pydantic import BaseModel
 from wowasi_ya.config import Settings, get_settings
 
 # Security setup
-security = HTTPBasic()
+security = HTTPBasic(auto_error=False)
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
@@ -73,14 +74,27 @@ def authenticate_user(
     return User(username=credentials.username, is_admin=True)
 
 
+def verify_api_key(api_key: str, settings: Settings) -> User | None:
+    """Verify an API key."""
+    if settings.api_key is None:
+        return None
+    if api_key == settings.api_key.get_secret_value():
+        return User(username="api_user", is_admin=False)
+    return None
+
+
 async def get_current_user(
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+    credentials: Annotated[HTTPBasicCredentials | None, Depends(security)],
+    api_key: Annotated[str | None, Depends(api_key_header)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> User:
     """Get the current authenticated user.
 
+    Supports both HTTP Basic auth and API key (X-API-Key header).
+
     Args:
-        credentials: HTTP Basic credentials.
+        credentials: HTTP Basic credentials (optional).
+        api_key: API key from X-API-Key header (optional).
         settings: Application settings.
 
     Returns:
@@ -89,14 +103,24 @@ async def get_current_user(
     Raises:
         HTTPException: If authentication fails.
     """
-    user = authenticate_user(credentials, settings)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return user
+    # Try API key first (preferred for portal/external access)
+    if api_key:
+        user = verify_api_key(api_key, settings)
+        if user:
+            return user
+
+    # Try HTTP Basic auth
+    if credentials:
+        user = authenticate_user(credentials, settings)
+        if user:
+            return user
+
+    # Neither worked
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Basic"},
+    )
 
 
 # Dependency for requiring authentication

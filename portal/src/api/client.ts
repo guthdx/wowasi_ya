@@ -1,8 +1,9 @@
 import axios from 'axios';
 import type { CreateProjectInput, DiscoveryResponse, DocumentExtractResult, NextStep, Project, ProjectProgress } from '../types';
 
-// API base URL - configurable via environment variable
+// API configuration from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wowasi.iyeska.net/api/v1';
+const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,11 +12,10 @@ const api = axios.create({
   },
 });
 
-// Add auth token to requests
+// Add API key to all requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (API_KEY) {
+    config.headers['X-API-Key'] = API_KEY;
   }
   return config;
 });
