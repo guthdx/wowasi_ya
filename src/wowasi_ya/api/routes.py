@@ -1,13 +1,15 @@
 """FastAPI routes for the Wowasi_ya API."""
 
+import time
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel, Field
 
 from wowasi_ya.api.auth import RequireAuth, User
 from wowasi_ya.config import Settings, get_settings
+from wowasi_ya.core import analytics
 from wowasi_ya.core import (
     AgentDiscoveryService,
     DocumentExtractor,
@@ -227,6 +229,7 @@ async def extract_document(
 @router.post("/projects", response_model=ProjectCreateResponse)
 async def create_project(
     project: ProjectInput,
+    request: Request,
     user: RequireAuth,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ProjectCreateResponse:
@@ -248,6 +251,16 @@ async def create_project(
     )
     project_states[project_id] = state
 
+    # Log project start for analytics
+    description_text = f"{project.description} {project.additional_context or ''}"
+    analytics.log_project_start(
+        project_id=project_id,
+        project_name=project.name,
+        description_length=len(description_text),
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
     return ProjectCreateResponse(
         project_id=project_id,
         status=state.status,
@@ -268,6 +281,8 @@ async def get_discovery_results(
     if not state:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    discovery_start = time.time()
+
     # Run discovery if not already done
     if not state.discovered_agents:
         domains, agents = discovery_service.discover(state.input)
@@ -285,6 +300,16 @@ async def get_discovery_results(
     # Reconstruct models from stored data
     domains = [DomainMatch(**d) for d in state.research_results.get("domains", [])]
     agents = [AgentDefinition(**a) for a in state.discovered_agents]
+
+    # Log discovery results for analytics
+    discovery_duration = time.time() - discovery_start
+    analytics.update_discovery_results(
+        project_id=project_id,
+        domains_count=len(domains),
+        agents_count=len(agents),
+        privacy_flags_count=len(privacy_scan.flags),
+        duration=discovery_duration,
+    )
 
     return DiscoveryResponse(
         project_id=project_id,
@@ -509,6 +534,8 @@ async def run_generation_pipeline(
     if not state:
         return
 
+    pipeline_start = time.time()
+
     try:
         # Prepare context
         if use_sanitized:
@@ -522,23 +549,49 @@ async def run_generation_pipeline(
         # Phase 1: Research
         state.status = ProjectStatus.RESEARCHING
         state.current_phase = 1
+        research_start = time.time()
 
         research_engine = ResearchEngine(settings)
         agents = [AgentDefinition(**a) for a in state.discovered_agents]
         research_results = await research_engine.execute_all(agents, text_to_use)
         state.research_results["agent_results"] = [r.model_dump() for r in research_results]
 
+        # Log research phase (token tracking would require LLM client updates)
+        research_duration = time.time() - research_start
+        analytics.log_research_complete(
+            project_id=project_id,
+            duration=research_duration,
+            # Token counts will be added when LLM client is updated
+            prompt_tokens=0,
+            completion_tokens=0,
+        )
+
         # Phase 2: Document Generation
         state.status = ProjectStatus.GENERATING
         state.current_phase = 2
+        generation_start = time.time()
 
         generator = DocumentGenerator(settings)
         generated_project = await generator.generate_all(state.input, research_results)
         state.generated_documents = [d.model_dump() for d in generated_project.documents]
 
+        # Calculate total words
+        total_words = sum(len(d.content.split()) for d in generated_project.documents)
+
+        # Log generation phase
+        generation_duration = time.time() - generation_start
+        analytics.log_generation_complete(
+            project_id=project_id,
+            total_duration=generation_duration,
+            documents_count=len(generated_project.documents),
+            total_words=total_words,
+            provider=settings.generation_provider,
+        )
+
         # Phase 3: Quality Check
         state.status = ProjectStatus.QUALITY_CHECK
         state.current_phase = 3
+        quality_start = time.time()
 
         quality_issues = quality_checker.check_project(generated_project)
         state.quality_issues = [
@@ -551,10 +604,25 @@ async def run_generation_pipeline(
             for i in quality_issues
         ]
 
+        # Log quality phase
+        quality_duration = time.time() - quality_start
+        analytics.log_quality_complete(
+            project_id=project_id,
+            duration=quality_duration,
+            quality_score=None,  # Can add scoring later
+        )
+
         # Phase 4: Output
         state.status = ProjectStatus.OUTPUTTING
+        output_start = time.time()
 
         output_manager = OutputManager(settings)
+
+        # Track output destinations
+        output_filesystem = False
+        output_obsidian = False
+        output_git = False
+        output_gdrive = False
 
         # Write to primary output format
         output_paths = await output_manager.write(
@@ -563,22 +631,58 @@ async def run_generation_pipeline(
         )
         state.output_paths = output_paths
 
+        # Track which format was used
+        if state.input.output_format == "filesystem":
+            output_filesystem = True
+        elif state.input.output_format == "obsidian":
+            output_obsidian = True
+        elif state.input.output_format == "git":
+            output_git = True
+        elif state.input.output_format == "gdrive":
+            output_gdrive = True
+
         # Auto-sync to Google Drive if enabled
         if settings.enable_gdrive_sync and state.input.output_format != "gdrive":
             try:
                 gdrive_paths = await output_manager.write(generated_project, "gdrive")
                 # Add gdrive paths to output for tracking
                 state.output_paths.extend([f"gdrive:{p}" for p in gdrive_paths])
+                output_gdrive = True
             except Exception as e:
                 # Don't fail the whole operation if gdrive sync fails
                 print(f"⚠ Warning: Google Drive sync failed: {e}")
 
+        # Log output phase
+        output_duration = time.time() - output_start
+        output_directory = output_paths[0] if output_paths else None
+        analytics.log_output_complete(
+            project_id=project_id,
+            duration=output_duration,
+            filesystem=output_filesystem,
+            obsidian=output_obsidian,
+            git=output_git,
+            gdrive=output_gdrive,
+            output_directory=output_directory,
+        )
+
         # Complete
         state.status = ProjectStatus.COMPLETED
+        total_duration = time.time() - pipeline_start
+        analytics.log_project_complete(
+            project_id=project_id,
+            status="success",
+            total_duration=total_duration,
+        )
 
     except Exception as e:
         state.status = ProjectStatus.FAILED
         state.error = str(e)
+        total_duration = time.time() - pipeline_start
+        analytics.log_project_error(
+            project_id=project_id,
+            error_message=str(e),
+            phase=state.status.value if state else None,
+        )
 
 
 # ============================================================================
@@ -915,3 +1019,66 @@ async def get_project_progress(
     progress = engine.get_progress(project_id)
 
     return progress
+
+
+# ============================================================================
+# Analytics API Endpoints
+# ============================================================================
+
+
+@router.get("/analytics/summary")
+async def get_analytics_summary(
+    user: RequireAuth,
+) -> dict:
+    """Get aggregated analytics summary.
+
+    Returns comprehensive usage metrics including:
+    - Total projects, success/failure rates
+    - Average duration and cost
+    - Token usage breakdown
+    - Output destination statistics
+    - Provider usage (Claude vs Llama)
+    - Daily trends (last 30 days)
+    - Phase timing breakdown
+    """
+    return analytics.get_analytics_summary()
+
+
+@router.get("/analytics/projects")
+async def get_recent_analytics_projects(
+    user: RequireAuth,
+    limit: int = 50,
+) -> list[dict]:
+    """Get recent projects for analytics dashboard.
+
+    Returns the most recent projects with their metrics.
+    """
+    return analytics.get_recent_projects(limit=limit)
+
+
+@router.get("/analytics/projects/{project_id}")
+async def get_project_analytics(
+    project_id: str,
+    user: RequireAuth,
+) -> dict:
+    """Get detailed analytics for a specific project.
+
+    Returns all tracked metrics for the project.
+    """
+    details = analytics.get_project_details(project_id)
+    if not details:
+        raise HTTPException(status_code=404, detail="Project not found in analytics")
+    return details
+
+
+@router.get("/analytics/health")
+async def get_analytics_health() -> dict:
+    """Check analytics database health.
+
+    Returns database connection status.
+    """
+    is_healthy = analytics.check_db_health()
+    return {
+        "status": "healthy" if is_healthy else "unhealthy",
+        "database": "connected" if is_healthy else "disconnected",
+    }
