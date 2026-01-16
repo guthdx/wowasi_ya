@@ -6,24 +6,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚨 ACTIVE WORK IN PROGRESS - READ FIRST
 
-**Last Updated:** January 13, 2026
+**Last Updated:** January 16, 2026
 
 **Current Project:** Document Quality Improvements - Truncation Fixed, Testing Quality
 
-**Status:** Streaming enabled, truncation solved, evaluating writing quality
+**Status:** Streaming enabled, truncation solved, portal consolidated
 
 **📋 Key Documents:**
 - `PROMPT_ENHANCEMENT_STATUS.md` - Document quality improvements (main status doc)
 - `USERS_GUIDE.md` - Complete workflow guide for all tools
 - `API_SECURITY.md` - Endpoint security documentation
-- `WEB_PORTAL_PLAN.md` - Portal implementation details
 
 **Recent Completions:**
+- ✅ **Portal consolidated** - wowasi.iyeska.net now serves both portal UI and API
+- ✅ **Token tracking implemented** - Analytics now tracks actual API costs
 - ✅ **Truncation issue SOLVED** - Added streaming for Claude API calls >8K tokens
 - ✅ Token limit increased to 32,000 (was 8,192)
 - ✅ Test generation: 55,143 words across 15 complete documents
 - ✅ Published to Outline: https://docs.iyeska.net/collection/EOIe0xThEw
-- ✅ Portal deployed at https://portal.iyeska.net
 
 **In Progress:**
 - 🔄 Evaluating writing quality (AI slop reduction)
@@ -92,50 +92,50 @@ docker compose up -d
 - Traefik Dashboard: http://traefik.localhost
 
 **Direct port access (fallback):**
-- API: http://localhost:8001
-- Portal: http://localhost:3003
+- API + Portal: http://localhost:8001
 
 **Port Allocation** (per PORT_REGISTRY.md):
-- API: 8001
-- Portal: 3003
+- API + Portal: 8001
 
 ## Web Portal
 
-The portal provides a visual dashboard for project tracking at https://portal.iyeska.net
+The portal provides a visual dashboard for project tracking. It's now **consolidated** with the API at https://wowasi.iyeska.net (the portal UI is served by FastAPI from `portal/dist`).
 
 **Tech Stack:**
 - React 19 + TypeScript + Vite 7
 - Tailwind CSS v4
 - TanStack Query (React Query) for data fetching
-- Nginx for static serving in Docker
+- Served by FastAPI (no separate container)
 
 **Local Development:**
 ```bash
 cd portal
 npm install
-npm run dev  # Runs on http://localhost:5173
+npm run dev  # Runs on http://localhost:5173 (dev server)
 ```
 
-**Docker Deployment:**
+**Production Build & Deploy:**
 ```bash
-# Build and run portal container
-docker compose -f docker-compose.portal.yml up -d --build
+# Build portal for production
+cd portal && npm run build
 
-# Access at http://localhost:3003
+# Portal is automatically served by FastAPI from portal/dist
+# Deploy the main wowasi_ya app
+bash deploy.sh
 ```
 
-**Production URL:** https://portal.iyeska.net (via Cloudflare Tunnel)
+**Production URL:** https://wowasi.iyeska.net (portal + API on same domain)
 
 **Portal Features:**
 - Dashboard with project list and status overview
 - Project view with documents organized by phase
 - Progress tracking with visual indicators
 - Next steps management (complete/skip actions)
+- Analytics dashboard with cost tracking
 
 **Related Files:**
 - `portal/` - React application source
-- `docker-compose.portal.yml` - Portal container config
-- `portal/nginx.conf` - Nginx SPA configuration
+- `src/wowasi_ya/main.py` - FastAPI serves portal from `portal/dist`
 
 ## Architecture
 
@@ -159,14 +159,21 @@ docker compose -f docker-compose.portal.yml up -d --build
 All LLM calls go through `src/wowasi_ya/core/llm_client.py`:
 
 ```python
+@dataclass
+class LLMResponse:
+    content: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+
 class BaseLLMClient(Protocol):
-    async def generate(prompt, max_tokens, temperature) -> str
+    async def generate(prompt, max_tokens, temperature) -> LLMResponse
     def supports_web_search() -> bool
     async def health_check() -> bool
 
 # Implementations
-ClaudeClient      # Anthropic API
+ClaudeClient      # Anthropic API (captures token usage)
 LlamaCPPClient    # Local via Cloudflare Tunnel
+FallbackClient    # Claude primary with Llama fallback on errors
 
 # Factory functions
 get_generation_client(settings)  # With automatic fallback logic
@@ -328,7 +335,7 @@ pm2 list
 ```
 
 **Public URLs:**
-- Wowasi API: https://wowasi.iyeska.net
+- Wowasi (Portal + API): https://wowasi.iyeska.net
 - Llama CPP: https://llama.iyeska.net (M4 Mac)
 
 ## Mac Setup (Llama Server)
@@ -462,8 +469,9 @@ PERPLEXITY_API_KEY=...
 
 **Claude API:**
 - Latency: 1-5 seconds per document
-- Cost: $3-15 per million tokens
+- Cost: $3/1M input tokens, $15/1M output tokens (Sonnet 4)
 
 **Full project generation:**
 - Time: 3-8 minutes (15 documents)
 - Cost: $2-5 (hybrid) vs $5-15 (full Claude)
+- Token usage tracked in analytics dashboard
