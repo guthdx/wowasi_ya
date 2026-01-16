@@ -239,9 +239,10 @@ def log_generation_complete(
                 documents_generated = ?,
                 total_words_generated = ?,
                 generation_cost_usd = ?,
+                generation_provider = ?,
                 current_phase = 'quality'
             WHERE project_id = ?
-        ''', (total_duration, documents_count, total_words, generation_cost, project_id))
+        ''', (total_duration, documents_count, total_words, generation_cost, provider, project_id))
         conn.commit()
 
 
