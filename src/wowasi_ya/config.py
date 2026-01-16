@@ -63,7 +63,7 @@ class Settings(BaseSettings):
 
     # Claude API
     claude_model: str = "claude-sonnet-4-20250514"
-    max_generation_tokens: int = 32000  # Full capacity for long documents
+    max_generation_tokens: int = 64000  # Claude Sonnet 4.5 maximum output capacity
     enable_web_search: bool = True
     max_concurrent_research_agents: int = Field(default=1, ge=1, le=10)  # Rate limit protection
 

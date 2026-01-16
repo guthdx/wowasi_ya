@@ -100,6 +100,9 @@ class ClaudeClient:
         """
         client = self._ensure_client()
 
+        # DEBUG: Log actual max_tokens being used
+        logger.info(f"Claude generate called with max_tokens={max_tokens}")
+
         try:
             # Use streaming for requests with high token counts to avoid timeout
             # Claude API requires streaming for operations >10 minutes
@@ -114,6 +117,20 @@ class ClaudeClient:
                 ) as stream:
                     async for text in stream.text_stream:
                         content += text
+
+                    # CHECK STOP REASON - detect truncation
+                    final_message = await stream.get_final_message()
+                    if final_message.stop_reason == "max_tokens":
+                        logger.error(
+                            f"⚠️ TRUNCATION DETECTED! stop_reason=max_tokens, "
+                            f"got {len(content)} chars. Increase MAX_GENERATION_TOKENS."
+                        )
+                    else:
+                        logger.info(
+                            f"Streaming complete: stop_reason={final_message.stop_reason}, "
+                            f"{len(content)} chars"
+                        )
+
                 return content
             else:
                 # Use non-streaming for smaller requests (faster)
@@ -123,6 +140,13 @@ class ClaudeClient:
                     temperature=temperature,
                     messages=[{"role": "user", "content": prompt}],
                 )
+
+                # CHECK STOP REASON - detect truncation
+                if response.stop_reason == "max_tokens":
+                    logger.error(
+                        f"⚠️ TRUNCATION DETECTED! stop_reason=max_tokens. "
+                        f"Increase MAX_GENERATION_TOKENS."
+                    )
 
                 # Extract text content from response
                 content = ""
