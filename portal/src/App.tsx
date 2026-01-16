@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Project } from './pages/Project';
 import { Document } from './pages/Document';
+import { Analytics } from './pages/Analytics';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="projects/:projectId" element={<Project />} />
             <Route path="projects/:projectId/documents/:documentType" element={<Document />} />
           </Route>

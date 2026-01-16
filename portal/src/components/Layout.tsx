@@ -44,6 +44,16 @@ export function Layout() {
                 >
                   Dashboard
                 </Link>
+                <Link
+                  to="/analytics"
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    location.pathname === '/analytics'
+                      ? 'text-slate bg-slate/10 dark:text-slate-light dark:bg-slate/20'
+                      : 'text-charcoal-light hover:text-charcoal hover:bg-slate/5 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate/10'
+                  }`}
+                >
+                  Analytics
+                </Link>
               </nav>
             </div>
 

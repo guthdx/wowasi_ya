@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { CreateProjectInput, DiscoveryResponse, DocumentExtractResult, NextStep, Project, ProjectProgress } from '../types';
+import type { AnalyticsProject, AnalyticsSummary, CreateProjectInput, DiscoveryResponse, DocumentExtractResult, NextStep, Project, ProjectProgress } from '../types';
 
 // API configuration from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wowasi.iyeska.net/api/v1';
@@ -132,6 +132,29 @@ export const nextStepsApi = {
 export const healthApi = {
   check: async () => {
     const { data } = await api.get('/health');
+    return data;
+  },
+};
+
+// Analytics API
+export const analyticsApi = {
+  getSummary: async (): Promise<AnalyticsSummary> => {
+    const { data } = await api.get('/analytics/summary');
+    return data;
+  },
+
+  getProjects: async (limit: number = 50): Promise<AnalyticsProject[]> => {
+    const { data } = await api.get('/analytics/projects', { params: { limit } });
+    return data;
+  },
+
+  getProject: async (projectId: string): Promise<AnalyticsProject> => {
+    const { data } = await api.get(`/analytics/projects/${projectId}`);
+    return data;
+  },
+
+  getHealth: async (): Promise<{ status: string; database: string }> => {
+    const { data } = await api.get('/analytics/health');
     return data;
   },
 };

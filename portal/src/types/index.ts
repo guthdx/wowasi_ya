@@ -181,3 +181,82 @@ export interface DiscoveryResponse {
   agents: AgentDefinition[];
   privacy_scan: PrivacyScan;
 }
+
+// Analytics types
+export interface AnalyticsSummary {
+  total_projects: number;
+  success_count: number;
+  failed_count: number;
+  processing_count: number;
+  success_rate: number;
+  avg_duration_seconds: number | null;
+  total_cost_usd: number;
+  total_research_tokens: number;
+  total_generation_tokens: number;
+  total_tokens: number;
+  total_documents_generated: number;
+  total_words_generated: number;
+  avg_quality_score: number | null;
+  output_destinations: {
+    filesystem: number;
+    obsidian: number;
+    git: number;
+    gdrive: number;
+    outline: number;
+  };
+  provider_usage: {
+    claude: number;
+    llamacpp: number;
+  };
+  unique_ips: number;
+  daily_counts: Array<{ date: string; count: number }>;
+  avg_phase_durations: {
+    discovery: number | null;
+    research: number | null;
+    generation: number | null;
+    quality: number | null;
+    output: number | null;
+  };
+}
+
+export interface AnalyticsProject {
+  id: number;
+  project_id: string;
+  timestamp: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  project_name: string;
+  description_length: number;
+  privacy_flags_count: number;
+  domains_identified: number;
+  agents_generated: number;
+  status: string;
+  error_message: string | null;
+  current_phase: string | null;
+  total_duration: number | null;
+  phase_discovery_duration: number | null;
+  phase_research_duration: number | null;
+  phase_generation_duration: number | null;
+  phase_quality_duration: number | null;
+  phase_output_duration: number | null;
+  research_prompt_tokens: number;
+  research_completion_tokens: number;
+  research_total_tokens: number;
+  generation_prompt_tokens: number;
+  generation_completion_tokens: number;
+  generation_total_tokens: number;
+  generation_provider: string | null;
+  research_cost_usd: number;
+  generation_cost_usd: number;
+  total_cost_usd: number;
+  documents_generated: number;
+  total_words_generated: number;
+  quality_score: number | null;
+  output_filesystem: number;
+  output_obsidian: number;
+  output_git: number;
+  output_gdrive: number;
+  output_outline: number;
+  output_directory: string | null;
+  outline_collection_id: string | null;
+}
